@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { prisma } from "@/lib/prisma";
 import { clerkEnabled } from "@/lib/clerk";
-import { upsertUserFromClerk } from "@/lib/user-sync";
-import { listUserTenants, withTenant } from "@/core/tenancy/tenancy";
+import { getSessionWorkspace } from "@/lib/session";
+import { withTenant } from "@/core/tenancy/tenancy";
 import SetupRequired from "@/components/SetupRequired";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { createWorkspace } from "./actions";
@@ -15,29 +14,10 @@ function formatPrice(cents: number) {
   return `R$ ${(cents / 100).toFixed(2).replace(".", ",")}/mês`;
 }
 
-async function getSessionUser() {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
-  const clerkUser = await currentUser();
-  if (!clerkUser) redirect("/sign-in");
-  return upsertUserFromClerk({
-    id: clerkUser.id,
-    firstName: clerkUser.firstName,
-    lastName: clerkUser.lastName,
-    username: clerkUser.username,
-    email: clerkUser.primaryEmailAddress?.emailAddress,
-  });
-}
-
 export default async function DashboardPage() {
   if (!clerkEnabled) return <SetupRequired />;
 
-  const user = await getSessionUser();
-  const memberships = await listUserTenants(user.id);
-
-  const cookieStore = await cookies();
-  const cookieTenant = cookieStore.get("active_tenant")?.value;
-  const active = memberships.find((m) => m.tenantId === cookieTenant) ?? memberships[0];
+  const { user, memberships, active } = await getSessionWorkspace();
 
   // ---- Nenhum workspace ainda: tela de criação ----
   if (!active) {
@@ -142,7 +122,15 @@ export default async function DashboardPage() {
             </span>
           )}
         </div>
-        <UserButton />
+        <div className="flex items-center gap-3">
+          <Link
+            href="/companies"
+            className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-black dark:hover:bg-zinc-300"
+          >
+            Empresas
+          </Link>
+          <UserButton />
+        </div>
       </header>
 
       <main className="flex-1 px-6 py-10">

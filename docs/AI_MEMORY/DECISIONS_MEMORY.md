@@ -70,6 +70,25 @@ Formato: DECISÃO / DATA / MOTIVO / CONTEXTO / ALTERNATIVAS / IMPACTO / STATUS
 - IMPACTO: login → listar workspaces → escolher → acessar dados, tudo com RLS.
 - STATUS: DECIDIDO e TESTADO (TENANCY_OK).
 
+## D12 — Sessão compartilhada em `lib/session.ts`
+- DATA: 2026-08-20
+- MOTIVO: auth (Clerk) + resolução do workspace ativo (cookie) eram duplicados
+  em cada página/action. Concentrar em `getServerUser`/`getSessionWorkspace`/
+  `requireWorkspaceAccess` para um único caminho, reduzir divergência e facilitar
+  as fases seguintes.
+- IMPACTO: dashboard, dashboard/actions e crm/companies/actions usam o mesmo
+  código; próximas fases herdam o padrão.
+- STATUS: DECIDIDO.
+
+## D13 — CRUD de CRM via server actions + RLS, com limite validado no servidor
+- DATA: 2026-08-20
+- MOTIVO: autorização sempre no servidor. Cada action: `requireWorkspaceAccess`
+  (membership) → conta dentro do contexto RLS → insere/atualiza/apaga →
+  domain_event de auditoria → `revalidatePath`.
+- IMPACTO: nenhuma query de CRM fora do tenancy; limite do plano impossível de
+  burlar pelo client.
+- STATUS: DECIDIDO e TESTADO (COMPANIES_OK).
+
 ## D11 — Workspace ativo em cookie httpOnly `active_tenant`
 - DATA: 2026-08-20
 - MOTIVO: lembrar qual workspace o usuário está usando entre páginas, sem

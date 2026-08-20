@@ -140,3 +140,35 @@ _2026-08-19 — Fase 1: Setup do projeto_
 ## Pendências
 - DONO criar o primeiro workspace na tela.
 - Aguardar confirmação para a Fase 5 (Empresas).
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 5: Empresas (CRUD de crm_companies)
+
+## Feito
+- Migration `20260820000400_crm_company_fields` (cnpj, city) aplicada.
+- `lib/session.ts` (getServerUser/getSessionWorkspace/requireWorkspaceAccess);
+  dashboard e dashboard/actions refatorados para usar.
+- `crm/companies/actions.ts` (create/update/delete + limite do plano + RLS +
+  domain_event); página `/companies`; CompanyForm + DeleteCompany (client).
+- Link "Empresas" no cabeçalho do dashboard.
+- `scripts/verify_companies.ts` → COMPANIES_OK.
+
+## Decisões desta sessão
+- Camada de sessão compartilhada em `lib/session.ts` (evita duplicar auth +
+  resolução de workspace em cada página/action).
+- Edição de empresa via query `?edit=id` (renderizada no servidor) em vez de
+  estado no client — mais simples e sem estado duplicado.
+- Erros de server action exibidos no formulário (useTransition + catch), sem
+  depender do error boundary.
+- Limite de plano validado com contagem dentro do contexto RLS (mesmo critério
+  da UI: `companies.length`).
+
+## Descobertas / problemas
+- Prisma `@db.Decimal` e arrays `String[]` existem para fases futuras.
+- Server actions não podem ser importadas em scripts tsx (usam cookies/next) —
+  teste de dados é feito pelas primitivas (withTenant + PLAN_LIMITS).
+
+## Pendências
+- DONO testar /companies e confirmar Fase 6.
+- Aguardar confirmação para a Fase 6 (Contatos).

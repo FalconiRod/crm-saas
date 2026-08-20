@@ -3,28 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { upsertUserFromClerk } from "@/lib/user-sync";
+import { getServerUser } from "@/lib/session";
 import { withTenantContext } from "@/core/tenancy/tenancy";
 import type { PlanKey } from "@shared/index";
 
 const ACTIVE_TENANT_COOKIE = "active_tenant";
-
-/** Retorna o usuário local autenticado (cria/atualiza a linha em `users`). */
-async function requireLocalUser() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Você precisa estar logado.");
-  const clerkUser = await currentUser();
-  if (!clerkUser) throw new Error("Você precisa estar logado.");
-  return upsertUserFromClerk({
-    id: clerkUser.id,
-    firstName: clerkUser.firstName,
-    lastName: clerkUser.lastName,
-    username: clerkUser.username,
-    email: clerkUser.primaryEmailAddress?.emailAddress,
-  });
-}
 
 function setActiveTenantCookie(tenantId: string) {
   return cookies().then((cookieStore) =>
@@ -39,7 +23,7 @@ function setActiveTenantCookie(tenantId: string) {
 
 /** Cria um workspace (tenant) e vincula o criador como OWNER. */
 export async function createWorkspace(formData: FormData) {
-  const user = await requireLocalUser();
+  const user = await getServerUser();
   const name = String(formData.get("name") ?? "").trim();
   const planKey = String(formData.get("plan") ?? "INDIVIDUAL") as PlanKey;
   if (!name) throw new Error("Informe o nome da empresa.");
@@ -71,7 +55,7 @@ export async function createWorkspace(formData: FormData) {
 
 /** Troca o workspace ativo (valida que o usuário pertence a ele). */
 export async function selectWorkspace(formData: FormData) {
-  const user = await requireLocalUser();
+  const user = await getServerUser();
   const tenantId = String(formData.get("tenantId") ?? "").trim();
   if (!tenantId) throw new Error("Selecione uma empresa.");
 

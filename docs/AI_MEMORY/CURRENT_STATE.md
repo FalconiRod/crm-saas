@@ -1,31 +1,28 @@
 # CURRENT_STATE
 
 ## Onde estamos
-**Fase 4 — Workspace (tenancy): CONCLUÍDA E TESTADA PELO DONO (2026-08-20).**
-O dono criou 2 workspaces ("CRM SAAS", plano Individual, papel OWNER) e o painel
-apareceu. Isolamento verificado por script (`TENANCY_OK`). Próximo: Fase 5
-(Empresas) — aguardando confirmação do dono.
+**Fase 5 — Empresas (crm_companies): IMPLEMENTADA, aguardando teste do dono.**
+CRUD completo, limite por plano e isolamento verificados por script
+(`COMPANIES_OK`). Próximo: o dono cadastrar/editar/excluir empresas na tela e
+confirmar para a Fase 6 (Contatos).
 
 ## O que funciona
-- **Tenancy**: `core/tenancy/tenancy.ts` (withTenantContext/withTenant/
-  listUserTenants/getMembership/requireMembership). RLS atualizado com
-  `app.user_id` (bootstrap da sessão) — migration `20260820000300` aplicada.
-- **Dashboard**: sem workspace → tela de criação (nome + plano); com workspace →
-  cabeçalho (nome/plano/papel), seletor quando há mais de um, cards de
-  contadores com escopo RLS. Server actions `createWorkspace`/`selectWorkspace`
-  com cookie `active_tenant`.
-- Login Clerk testado (usuário "Rodrigo Paulo" em `users`); build OK.
-- Banco: 5 migrations aplicadas; RLS verificado (app_user sem BYPASSRLS);
-  `prisma migrate status`: up to date.
+- **Empresas**: página `/companies` com lista, cadastro (nome + CNPJ + cidade +
+  telefone + e-mail + observações), edição (`?edit=id`) e exclusão com
+  confirmação. Limite do plano exibido e validado (INDIVIDUAL/TEAM=1,
+  AGENCY=ilimitado). Auditoria por domain_event.
+- **Sessão compartilhada**: `lib/session.ts` (`getServerUser`,
+  `getSessionWorkspace`, `requireWorkspaceAccess`) usado pelo dashboard e pelas
+  actions de CRM.
+- Fases 1–4 seguem funcionando (auth Clerk, tenancy, workspaces).
 
 ## O que falta / atenção
-- DONO: confirmar Fase 5 (Empresas) para seguir.
-- Webhook do Clerk ainda opcional (updates/deletes futuros de perfil).
+- DONO: testar Empresas em http://localhost:3000/companies e confirmar Fase 6.
+- Webhook do Clerk ainda opcional.
 - Inspecionar 3 vulnerabilidades high do `npm audit`.
-- Duplicar workspaces é permitido (sem validação de nome único) — decisão
-  consciente para o MVP; renomear/excluir workspace ainda não existe.
+- Renomear/excluir workspace ainda não existe (não é bloqueio).
 
 ## Próximo passo
-Fase 5 — Empresas: CRUD de `crm_companies` (listar/criar/editar/apagar) dentro
-do workspace, com plano `maxCompaniesPerAccount` (INDIVIDUAL=1, TEAM=1,
-AGENCY=ilimitado). **Aguardar confirmação do dono.**
+Fase 6 — Contatos: CRUD de `crm_contacts` (nome, telefone, e-mail, tags,
+origem) opcionalmente vinculado a uma empresa, com limites por plano.
+**Aguardar confirmação do dono.**

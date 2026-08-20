@@ -121,6 +121,8 @@ model CrmCompany {
   tenantId  String       @map("tenant_id")
   tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name      String
+  cnpj      String?
+  city      String?
   phone     String?
   email     String?
   notes     String?

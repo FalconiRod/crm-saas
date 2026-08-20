@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 5: Empresas (CRUD de crm_companies)
+- Migration `20260820000400_crm_company_fields` aplicada: colunas `cnpj` e
+  `city` em `crm_companies`.
+- `lib/session.ts` — helpers compartilhados: `getServerUser`,
+  `getSessionWorkspace`, `requireWorkspaceAccess` (dashboard e actions de CRM
+  usam o mesmo caminho).
+- `crm/companies/actions.ts` — `createCompany`/`updateCompany`/`deleteCompany`
+  com validação de plano (`maxCompaniesPerAccount`), RLS e auditoria
+  (`company.created/updated/deleted`).
+- `app/companies/page.tsx` — lista + formulário (criar/editar via `?edit=id`),
+  uso do limite do plano, exclusão com confirmação.
+- Componentes client: `CompanyForm.tsx` (criar/editar), `DeleteCompany.tsx`.
+- Dashboard ganhou link "Empresas" no cabeçalho.
+- `scripts/verify_companies.ts` → **COMPANIES_OK** (cria, bloqueia 2ª pelo
+  limite, edita, isola entre workspaces, apaga, cleanup).
+
 ## 2026-08-20 — Fase 4: Workspace / tenancy implementado
 - Migration `20260820000300_tenancy_session` aplicada no Neon: policies de
   `tenant_users` e `tenants` passam a aceitar `app.user_id` (bootstrap da
