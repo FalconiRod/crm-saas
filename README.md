@@ -14,7 +14,8 @@ empresa, e quem administra várias empresas (agência/consultor).
 ## O que tem (funcional)
 
 - Workspaces (empresas do cliente do SaaS), cada um isolado por RLS.
-- CRM: empresas, contatos e pipeline de leads (kanban por estágio) com limites por plano.
+- CRM: empresas, contatos, pipeline de leads (kanban por estágio) e tarefas
+  (lembretes vinculados a contato/lead, com responsável e vencimento) — limites por plano.
 - Dashboard com métricas (cartões, funil, leads recentes, filtro de período).
 - Times: convidar por e-mail (aceite automático ao logar), papéis
   (Dono/Administrador/Gerente/Membro/Somente leitura) e permissões por papel.
@@ -75,6 +76,7 @@ npx tsx scripts/verify_leads.ts       # pipeline/kanban + limites
 npx tsx scripts/verify_dashboard.ts   # métricas do dashboard
 npx tsx scripts/verify_team.ts        # convites, papéis, permissões
 npx tsx scripts/verify_hardening.ts   # bloqueios de RLS (escalada/tamper)
+npx tsx scripts/verify_tasks.ts       # tarefas (CRUD, vínculos, permissões)
 ```
 
 ## Checagens de qualidade
@@ -95,6 +97,7 @@ npm run lint    # ESLint
   /companies          → ações de server das empresas
   /contacts           → ações de server dos contatos
   /leads              → ações de server do pipeline
+  /tasks              → ações de server das tarefas
 /prisma               → schema.prisma + migrations (inclui policies de RLS)
 /packages/shared      → tipos TS compartilhados (planos, pipeline, enums)
 /scripts              → testes de fumaça + grant_app_user.sql

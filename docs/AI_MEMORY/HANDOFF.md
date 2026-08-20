@@ -10,10 +10,10 @@ Tailwind + Prisma 7 + Neon/Postgres + Clerk). Atende 3 perfis no mesmo produto
 multi-tenant é o requisito inegociável** e é garantido por RLS no Postgres.
 
 ## Estado atual
-- **10 fases do briefing implementadas e verificadas.** Último commit: `44aa44a`.
+- **10 fases do briefing implementadas e verificadas + Fase 11 (Tarefas).**
+  Último commit: `010a4a6` (Fase 11 — após o push desta sessão).
 - Repo público do dono: `https://github.com/FalconiRod/crm-saas` (branch `master`).
-- Tudo commitado/pushado; working tree limpo. Backup em
-  `D:\PROJETOS\BACKUPS\BACKUP_CRM_SAAS_2026-08-20`.
+- Backup em `D:\PROJETOS\BACKUPS\BACKUP_CRM_SAAS_2026-08-20` (refresh na Fase 11).
 
 ## Como rodar local
 ```bash
@@ -35,7 +35,11 @@ npm run dev            # http://localhost:3000
 - **Permissões por papel** (`core/permissions/access.ts`): VIEWER lê; USER
   cria/edita/move; MANAGER + exclui; ADMIN/OWNER gerem o time. Toda action
   começa com `requireWorkspaceAccess("<permission>")`. Nomes das permissões:
-  `company.*`, `contact.*`, `lead.*` (update/delete/move), `member.invite/updateRole/remove`.
+  `company.*`, `contact.*`, `lead.*` (update/delete/move), `task.*`
+  (create/update/delete), `member.invite/updateRole/remove`.
+- **Vínculos FK cruzados entre tenants**: FK IGNORA RLS — todo vínculo
+  (contato/lead/empresa/responsável) é validado NA ACTION dentro do tenant ativo
+  (`findUnique` → NULL → recusa). Novo vínculo = validar na action (D21).
 - **Aceite de convite**: roda no bootstrap (`lib/session.ts`), cria o vínculo e
   NÃO marca o convite ACCEPTED (estado derivado do vínculo na página de Equipe).
   Não reintroduzir `invitation.update` no fluxo de aceite.
@@ -51,6 +55,7 @@ npx tsx scripts/verify_leads.ts
 npx tsx scripts/verify_dashboard.ts
 npx tsx scripts/verify_team.ts
 npx tsx scripts/verify_hardening.ts
+npx tsx scripts/verify_tasks.ts
 npm run build
 npm run lint
 ```
@@ -60,7 +65,7 @@ lógica. No Windows usar `npm.cmd`/`npx.cmd`; PowerShell trata stderr do git
 como erro (push OK mesmo assim); reiniciar o `next dev` após mudanças no schema.
 
 ## Pendências / próximos passos (decidir com o dono)
-- Revisão final do dono na tela (principalmente `/settings` e Equipe).
+- DONO testar `/tasks` na tela; revisão final de `/settings` e Equipe.
 - Nome do produto (hoje provisório "crm-saas").
 - Billing real (hoje todo workspace novo é INDIVIDUAL; outros planos são seeds).
 - E-mail de notificação de convite (Resend) — hoje o convite é "silencioso".
@@ -68,14 +73,18 @@ como erro (push OK mesmo assim); reiniciar o `next dev` após mudanças no schem
 - `npm audit`: 3 high em `deepmerge-ts` via Prisma CLI (toolchain de dev, risco
   aceito — correção exigiria downgrade do Prisma).
 - Webhook do Clerk ainda opcional (o painel sincroniza `users` no login).
+- Sugeridos pela análise de mercado do Claude (não implementados): CI no GitHub
+  Actions, Sentry, LGPD (política + termos), link WhatsApp (wa.me), confirmação
+  reforçada de delete em CRM, múltiplos funis, campos customizados, PDF de
+  proposta, PWA.
 
 ## Estrutura rápida
 - `app/` — rotas/páginas: `/dashboard`, `/companies`, `/contacts`, `/leads`,
-  `/team`, `/settings`, `/api/webhooks/clerk`, auth do Clerk.
+  `/tasks`, `/team`, `/settings`, `/api/webhooks/clerk`, auth do Clerk.
 - `core/tenancy/tenancy.ts` — helper de RLS (app.tenant_id/user_id/user_email).
 - `core/permissions/access.ts` — papéis e permissões.
 - `lib/session.ts` — sessão + workspace ativo + aceite de convites.
 - `crm/*/actions.ts` — server actions (com permissão + auditoria + RLS).
-- `prisma/migrations/` — inclui as policies de RLS (001, 003, 007, 008).
+- `prisma/migrations/` — inclui as policies de RLS (001, 003, 007, 008, 010).
 - `packages/shared/` — enums/tipos compartilhados (plans, pipeline, roles).
 - `docs/AI_MEMORY/` — memória persistente do projeto (ler antes de trabalhar).

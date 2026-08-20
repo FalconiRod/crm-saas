@@ -47,20 +47,25 @@ enum InvitationStatus {
   REVOKED
 }
 
+enum TaskStatus {
+  PENDING
+  DONE
+}
+
 // ---------------------------------------------------------------
 // Planos (referência global — SEM tenant_id, SEM RLS)
 // ---------------------------------------------------------------
 
 model Plan {
-  id                      String   @id @default(cuid())
-  key                     PlanKey  @unique
-  name                    String
-  maxUsers                Int? @map("max_users") // null = ilimitado
-  maxCompaniesPerAccount  Int? @map("max_companies_per_account") // null = ilimitado
-  maxContacts             Int? @map("max_contacts") // null = ilimitado
-  maxLeads                Int? @map("max_leads") // null = ilimitado
-  priceCents              Int      @default(0) @map("price_cents")
-  tenants                 Tenant[]
+  id                     String   @id @default(cuid())
+  key                    PlanKey  @unique
+  name                   String
+  maxUsers               Int?     @map("max_users") // null = ilimitado
+  maxCompaniesPerAccount Int?     @map("max_companies_per_account") // null = ilimitado
+  maxContacts            Int?     @map("max_contacts") // null = ilimitado
+  maxLeads               Int?     @map("max_leads") // null = ilimitado
+  priceCents             Int      @default(0) @map("price_cents")
+  tenants                Tenant[]
 
   @@map("plans")
 }
@@ -77,11 +82,12 @@ model Tenant {
   settings  Json     @default("{}")
   createdAt DateTime @default(now()) @map("created_at")
 
-  users     TenantUser[]
-  companies CrmCompany[]
-  contacts  CrmContact[]
-  leads     CrmLead[]
-  events    DomainEvent[]
+  users       TenantUser[]
+  companies   CrmCompany[]
+  contacts    CrmContact[]
+  leads       CrmLead[]
+  tasks       CrmTask[]
+  events      DomainEvent[]
   invitations Invitation[]
 
   @@map("tenants")
@@ -92,16 +98,18 @@ model Tenant {
 // ---------------------------------------------------------------
 
 model User {
-  id             String       @id @default(cuid())
+  id             String   @id @default(cuid())
   name           String
-  email          String       @unique
-  authProviderId String?      @unique @map("auth_provider_id") // id do usuário no Clerk
-  createdAt      DateTime     @default(now()) @map("created_at")
+  email          String   @unique
+  authProviderId String?  @unique @map("auth_provider_id") // id do usuário no Clerk
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  tenantUsers TenantUser[]
-  ownedLeads  CrmLead[]    @relation("LeadOwner")
-  events      DomainEvent[]
-  invitationsInvited Invitation[] @relation("InvitedBy")
+  tenantUsers        TenantUser[]
+  ownedLeads         CrmLead[]     @relation("LeadOwner")
+  assignedTasks      CrmTask[]     @relation("TaskAssignee")
+  createdTasks       CrmTask[]     @relation("TaskCreator")
+  events             DomainEvent[]
+  invitationsInvited Invitation[]  @relation("InvitedBy")
 
   @@map("users")
 }
@@ -151,17 +159,17 @@ model Invitation {
 // ---------------------------------------------------------------
 
 model CrmCompany {
-  id        String       @id @default(cuid())
-  tenantId  String       @map("tenant_id")
-  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name      String
   cnpj      String?
   city      String?
   phone     String?
   email     String?
   notes     String?
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   contacts CrmContact[]
 
@@ -174,21 +182,22 @@ model CrmCompany {
 // ---------------------------------------------------------------
 
 model CrmContact {
-  id           String       @id @default(cuid())
-  tenantId     String       @map("tenant_id")
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  crmCompanyId String?      @map("crm_company_id")
-  crmCompany   CrmCompany?  @relation(fields: [crmCompanyId], references: [id], onDelete: SetNull)
+  id           String      @id @default(cuid())
+  tenantId     String      @map("tenant_id")
+  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  crmCompanyId String?     @map("crm_company_id")
+  crmCompany   CrmCompany? @relation(fields: [crmCompanyId], references: [id], onDelete: SetNull)
   name         String
   phone        String?
   email        String?
-  tags         String[]     @default([])
+  tags         String[]    @default([])
   origin       String?
   status       String?
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
 
   leads CrmLead[]
+  tasks CrmTask[]
 
   @@index([tenantId])
   @@index([tenantId, crmCompanyId])
@@ -215,11 +224,45 @@ model CrmLead {
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
+  tasks CrmTask[]
+
   @@index([tenantId])
   @@index([tenantId, stage])
   @@index([tenantId, contactId])
   @@index([tenantId, ownerUserId])
   @@map("crm_leads")
+}
+
+// ---------------------------------------------------------------
+// Tarefa (CRM central — Fase 11): lembrete/atividade vinculável a um
+// contato e/ou lead, com responsável e data de vencimento.
+// ---------------------------------------------------------------
+
+model CrmTask {
+  id          String      @id @default(cuid())
+  tenantId    String      @map("tenant_id")
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  title       String
+  notes       String?
+  dueAt       DateTime?   @map("due_at")
+  status      TaskStatus  @default(PENDING)
+  contactId   String?     @map("contact_id")
+  contact     CrmContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  leadId      String?     @map("lead_id")
+  lead        CrmLead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  assigneeId  String?     @map("assignee_id")
+  assignee    User?       @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdById String?     @map("created_by_id")
+  createdBy   User?       @relation("TaskCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@index([tenantId, status])
+  @@index([tenantId, dueAt])
+  @@index([tenantId, assigneeId])
+  @@index([tenantId, contactId])
+  @@index([tenantId, leadId])
+  @@map("crm_tasks")
 }
 
 // ---------------------------------------------------------------

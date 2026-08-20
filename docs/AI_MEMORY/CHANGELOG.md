@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 11: Tarefas (CRM central)
+- Migration `20260820001000_crm_tasks` aplicada: tabela `crm_tasks` (title,
+  notes, due_at, status PENDING/DONE, contact_id?, lead_id? SetNull,
+  assignee_id?, created_by_id? → users SetNull) com RLS FORCE + policy única
+  `tenant_isolation` e índices (tenant_id+status/due_at/assignee/contact/lead).
+  `app_user` ganhou privilégios automaticamente via default privileges.
+- Permissões novas em `core/permissions/access.ts`: `task.create/update/delete`
+  (VIEWER não tem; USER cria/edita e conclui; MANAGER/ADMIN/OWNER também excluem).
+- `crm/tasks/actions.ts` — `createTask`/`updateTask`/`toggleTask`/`deleteTask`
+  com `requireWorkspaceAccess`, validação de contato/lead/responsável no MESMO
+  workspace e auditoria (`task.created/updated/completed/reopened/deleted`).
+- `app/tasks/page.tsx` — lista com filtro (Todas/Pendentes/Concluídas), badge de
+  atraso (vencido + pendente), dados do vínculo (contato/lead/responsável),
+  formulário de criação (TaskForm) e concluir/reabrir/excluir (TaskActions).
+- Dashboard: link "Tarefas" no cabeçalho.
+- `scripts/verify_tasks.ts` → **TASKS_OK** (CRUD, concluir/reabrir, isolamento
+  entre tenants no SELECT/UPDATE/DELETE, vínculo de contato de outro tenant
+  invisível pelo RLS, matriz de permissões por papel).
+- DESCOBERTA: checagem de FK IGNORA RLS no Postgres — um vínculo cruzado entre
+  tenants é bloqueado pela camada do app (validação `validateTargets`), não pelo
+  banco. Documentado em RULES/DECISIONS (D21).
+- Regressão completa OK (TENANCY/TEAM/COMPANIES/CONTACTS/LEADS/DASHBOARD/
+  HARDENING_OK) + build + lint limpos. Dev server reiniciado.
+
 ## 2026-08-20 — Fase 10: Finalização (auditoria, hardening e documentação)
 - **Auditoria** (code-reviewer + database-reviewer): permissões trocadas nas
   actions de CRM corrigidas (update/delete/move); fallback da URL do dono

@@ -1,0 +1,16 @@
+
+> crm-saas@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.16.0.2:3000
+- Environments: .env
+✓ Ready in 1698ms
+✓ Running next.config.ts took 153ms
+
+Attention: Clerk collects telemetry data from its SDKs when connected to development instances.
+The data collected is used to inform Clerk's product roadmap.
+To learn more, including how to opt-out from the telemetry program, visit: https://clerk.com/docs/telemetry.
+
+ GET /tasks 307 in 2.4s (next.js: 1213ms, proxy.ts: 489ms, application-code: 714ms)

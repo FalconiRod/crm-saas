@@ -65,6 +65,17 @@ probability Int? default 0, notes?, createdAt, updatedAt`. RLS FORCE.
 `@@index([tenantId])`, `@@index([tenantId,stage])`, `@@index([tenantId,contactId])`,
 `@@index([tenantId,ownerUserId])`.
 
+### `crm_tasks` (Fase 11)
+`id, tenantId, title, notes?, dueAt?, status (TaskStatus, default PENDING),
+contactId?→crm_contacts (SetNull), leadId?→crm_leads (SetNull),
+assigneeId?→users (SetNull), createdById?→users (SetNull), createdAt, updatedAt`.
+RLS FORCE (policy única `tenant_isolation`).
+`@@index([tenantId,status])`, `@@index([tenantId,dueAt])`,
+`@@index([tenantId,assigneeId])`, `@@index([tenantId,contactId])`,
+`@@index([tenantId,leadId])`, `@@index([tenantId])`.
+**Atenção:** FK IGNORA RLS — vínculos (contato/lead/responsável) são validados
+na server action dentro do tenant ativo (ver D21/RULES).
+
 ### `domain_events` — eventos + auditoria (mesma tabela)
 `id, tenantId, userId?→users (SetNull), type, payload Json, isAudit Bool, ip?,
 createdAt`. RLS FORCE. `@@index([tenantId,createdAt])`.
@@ -74,10 +85,11 @@ createdAt`. RLS FORCE. `@@index([tenantId,createdAt])`.
 - `PlanKey`: INDIVIDUAL TEAM AGENCY
 - `PipelineStage`: NOVO CONTATO INTERESSADO PROPOSTA NEGOCIACAO GANHO PERDIDO
 - `InvitationStatus`: PENDING ACCEPTED REVOKED
+- `TaskStatus`: PENDING DONE
 
 ## RLS (estado atual — migrations 001 + 003 + 007 + **008_harden_rls_and_indexes**)
 - Tabelas com RLS FORCE: tenants, tenant_users, invitations, crm_companies,
-  crm_contacts, crm_leads, domain_events.
+  crm_contacts, crm_leads, crm_tasks, domain_events.
 - **Fase 10 (008):** policies de tenants/tenant_users/invitations foram
   trocadas por policies POR COMANDO (select/insert/update/delete) com regras
   de papel (ver acima). crm_* e domain_events seguem a policy única
@@ -99,6 +111,7 @@ createdAt`. RLS FORCE. `@@index([tenantId,createdAt])`.
 - `20260820000600_lead_limits` — max_leads.
 - `20260820000700_invitations` — tabela + enum + RLS.
 - `20260820000800_harden_rls_and_indexes` — RLS por comando + índices.
+- `20260820001000_crm_tasks` — tabela + enum TaskStatus + RLS FORCE + índices.
 
 ## Status
 - Todas as migrations **APLICADAS no Neon** (`migrate deploy` OK).

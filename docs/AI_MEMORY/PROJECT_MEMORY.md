@@ -17,6 +17,12 @@ Nunca misturar. Um tenant não aparece como opção de "empresa" no CRM de outro
 ## Pipeline (estágios fixos do MVP)
 NOVO → CONTATO → INTERESSADO → PROPOSTA → NEGOCIAÇÃO → GANHO / PERDIDO
 
+## Funcionalidades implementadas
+- Workspaces (tenants) com isolamento por RLS + papéis por membro.
+- CRM: empresas, contatos, leads/pipeline (kanban), **tarefas** (Fase 11 —
+  lembrete vinculável a contato/lead, responsável e vencimento), dashboard com
+  métricas, times/convites por e-mail, configurações do workspace.
+
 ## Modelo de receita
 Planos INDIVIDUAL / TEAM / AGENCY com limites (`max_users`,
 `max_companies_per_account`). Sem pagamento real no MVP (mock/estrutura).

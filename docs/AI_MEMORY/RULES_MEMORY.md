@@ -44,3 +44,11 @@ _Regras descobertas ao longo do projeto. Não repetir erros._
 - CONFIRMADO (Fase 10): `npm run build` e `npm run lint` devem passar antes de
   commit. Regras do lint: sem `any` explícito, sem imports sem uso; `Date.now()`
   em Server Component precisa de `eslint-disable-next-line react-hooks/purity`.
+- CONFIRMADO (Fase 11): a checagem de FOREIGN KEY no Postgres IGNORA o RLS —
+  vínculo FK cruzado entre tenants NÃO é bloqueado pelo banco. Todo vínculo de
+  tabela de tenant (contato/lead/empresa/responsável) DEVE ser validado na
+  server action com `findUnique` dentro do tenant ativo (RLS devolve NULL →
+  app recusa). Não confiar só na FK/RLS para referenciamento.
+- CONFIRMADO (Fase 11): tabelas de CRM novas (crm_tasks etc.) herdam DML do
+  `app_user` via ALTER DEFAULT PRIVILEGES — só é preciso a migration (criar
+  tabela + RLS FORCE + policy `tenant_isolation`), sem GRANT manual.

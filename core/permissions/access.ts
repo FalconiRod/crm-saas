@@ -16,6 +16,9 @@ export type Permission =
   | "lead.update"
   | "lead.delete"
   | "lead.move"
+  | "task.create"
+  | "task.update"
+  | "task.delete"
   | "member.invite"
   | "member.updateRole"
   | "member.remove";
@@ -32,6 +35,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "lead.create",
     "lead.update",
     "lead.move",
+    "task.create",
+    "task.update",
   ],
   MANAGER: [
     "workspace.view",
@@ -45,6 +50,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "lead.update",
     "lead.delete",
     "lead.move",
+    "task.create",
+    "task.update",
+    "task.delete",
   ],
   ADMIN: [
     "workspace.view",
@@ -58,6 +66,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "lead.update",
     "lead.delete",
     "lead.move",
+    "task.create",
+    "task.update",
+    "task.delete",
     "member.invite",
     "member.updateRole",
     "member.remove",
@@ -74,6 +85,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "lead.update",
     "lead.delete",
     "lead.move",
+    "task.create",
+    "task.update",
+    "task.delete",
     "member.invite",
     "member.updateRole",
     "member.remove",

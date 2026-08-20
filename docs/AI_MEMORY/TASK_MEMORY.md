@@ -67,3 +67,13 @@ Formato: ID / OBJETIVO / CONTEXTO / REQUISITOS / ESTADO / PENDÊNCIAS
   memória atualizada.
 - PENDÊNCIAS: dono fazer revisão final na tela e confirmar; decidir nome,
   billing, deploy e melhorias (e-mail de convite via Resend etc.).
+
+## T11 — Fase 11: Tarefas — CONCLUÍDA (2026-08-20)
+- Migration `20260820001000_crm_tasks` (tabela + enum TaskStatus + RLS FORCE +
+  índices); permissões `task.*` em access.ts; `crm/tasks/actions.ts`
+  (create/update/toggle/delete com validação de vínculos no MESMO workspace);
+  página `/tasks` (filtro, atraso, formulário, concluir/excluir); link no
+  dashboard; `verify_tasks.ts` → TASKS_OK.
+- PENDÊNCIAS: dono testar /tasks na tela; melhorias futuras sugeridas pela
+  análise de mercado (CI, Sentry, LGPD, wa.me, confirmação de delete, funis,
+  campos customizados).

@@ -199,3 +199,18 @@ Formato: DECISÃO / DATA / MOTIVO / CONTEXTO / ALTERNATIVAS / IMPACTO / STATUS
   em invitations, o que abria tamper). Agora: cria o vínculo (1 transação) e o
   status "Aceito" é derivado da existência do membro na página de Equipe.
 - STATUS: DECIDIDO e TESTADO.
+
+## D21 — Vínculos cruzados entre tenants são bloqueados na CAMADA DO APP
+- DATA: 2026-08-20
+- MOTIVO: ao criar Tarefas descobrimos que a checagem de FOREIGN KEY no Postgres
+  IGNORA o RLS — um INSERT em crm_tasks com `contact_id` de outro tenant passava
+  (a FK só verifica a existência do registro). O RLS protege a linha em si, mas
+  não o referenciamento cruzado. Por isso todo vínculo (contato/lead/empresa/
+  responsável) é validado ANTES pela action (`validateTargets`/`validateAssignee`),
+  que faz `findUnique` dentro do tenant ativo — o RLS devolve NULL e o app
+  recusa. Mesmo padrão já existia em empresas/contatos (validateCompany).
+- ALTERNATIVAS: triggers de segurança no banco (mais complexo; as tables já
+  cobrem o caso no app).
+- IMPACTO: regra registrada — novo vínculo FK entre tabelas de tenant DEVE ter
+  validação na action (não confiar só na FK/RLS).
+- STATUS: DECIDIDO e TESTADO (verify_tasks).

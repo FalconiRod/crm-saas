@@ -323,3 +323,46 @@ _2026-08-19 — Fase 1: Setup do projeto_
   confirmação da finalização.
 - Melhorias futuras registradas: notificação por e-mail (Resend), billing,
   nome do produto, deploy.
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 11: Tarefas (após análise de mercado do Claude)
+
+## Feito
+- Análise do Claude avaliada: concordamos em ~90%; prioridade 1 = implementar o
+  módulo de Tarefas (gap do escopo original).
+- Migration `20260820001000_crm_tasks` (tabela + enum TaskStatus + RLS FORCE +
+  policy `tenant_isolation` + índices) APLICADA no Neon; `prisma generate` +
+  `migrate deploy` OK.
+- Permissões `task.create/update/delete` em `core/permissions/access.ts`
+  (VIEWER lê; USER cria/edita/conclui; MANAGER+ exclui).
+- `crm/tasks/actions.ts` (create/update/toggle/delete) com validação de
+  contato/lead/responsável no MESMO workspace + auditoria.
+- `app/tasks/page.tsx` (filtro Todas/Pendentes/Concluídas, badge de atraso,
+  formulário TaskForm, concluir/reabrir/excluir TaskActions) + link no dashboard.
+- `scripts/verify_tasks.ts` → **TASKS_OK**; regressão completa OK
+  (TENANCY/TEAM/COMPANIES/CONTACTS/LEADS/DASHBOARD/HARDENING_OK);
+  build + lint limpos; dev server reiniciado (PID 8536).
+
+## Decisões desta sessão
+- D21: vínculo FK cruzado entre tenants é bloqueado na CAMADA DO APP (FK ignora
+  RLS no Postgres) — nova regra para tabelas futuras (ver RULES_MEMORY).
+- Tarefas sem limite de plano (ilimitadas) e sem edição inline no MVP
+  (criar/concluir/reabrir/excluir é suficiente; a action `updateTask` existe).
+
+## Descobertas / problemas
+- Checagem de FK ignora RLS — teste inicial esperava bloqueio no banco e o
+  INSERT passou; ajustado para validar o isolamento pelo app (findUnique → NULL).
+- `prisma format` necessário após adicionar relação nova no schema (error P1012:
+  "missing opposite relation field") — sempre rodar `prisma format` + `generate`.
+- Tipo `{ status: string }` não é `CrmTaskWhereInput` — usar `as const` nos
+  literais do filtro; `include` só infere se o `where` estiver bem tipado.
+- `let taskId: string` sem inicialização → erro TS strict "used before assigned"
+  nos scripts; usar `let x = ""`.
+
+## Pendências
+- DONO testar /tasks na tela e dar retorno.
+- Próximas melhorias sugeridas pela análise de mercado: CI no GitHub Actions,
+  Sentry, LGPD (política + termos + exclusão por solicitação), link WhatsApp
+  (wa.me), confirmação reforçada de delete em CRM, múltiplos funis, campos
+  customizados, PDF de proposta, PWA.
