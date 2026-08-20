@@ -45,6 +45,15 @@ export default async function Home() {
             </Link>
           </div>
         )}
+        <footer className="mt-12 flex items-center justify-center gap-4 text-sm text-zinc-400 dark:text-zinc-500">
+          <Link href="/privacy" className="hover:text-zinc-900 dark:hover:text-zinc-100">
+            Política de Privacidade
+          </Link>
+          <span aria-hidden>·</span>
+          <Link href="/terms" className="hover:text-zinc-900 dark:hover:text-zinc-100">
+            Termos de Uso
+          </Link>
+        </footer>
       </div>
     </main>
   );

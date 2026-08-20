@@ -1,41 +1,30 @@
 # CURRENT_STATE
 
 ## Onde estamos
-**Fase 11 — Tarefas: CONCLUÍDA (módulo de Tarefas adicionado).**
-Todas as 10 fases + o módulo de Tarefas estão implementados e verificados.
-Falta o DONO testar a página /tasks na tela e decidir os próximos passos
-(nome, billing, deploy, melhorias).
+**Fase 11 — Operacional (LGPD + CI + Sentry): CONCLUÍDA.**
+Todas as 10 fases + Tarefas + lote operacional (LGPD, CI, Sentry) implementados
+e verificados. Falta o DONO testar /privacy, /terms, /tasks e confirmar.
 
 ## O que funciona
-- **Auditoria concluída**: permissões de CRM corrigidas (a troca update/delete
-  permitia USER excluir; corrigido e coberto por teste), RLS endurecida por
-  comando (só OWNER altera/exclui workspace; só OWNER/ADMIN gerem time; o
-  convidado não altera o próprio convite), fail-fast sem APP_DATABASE_URL.
-- **`/settings`**: renomear e excluir o workspace (só o dono, exclusão com
-  confirmação digitando o nome).
-- **`/tasks`** (novo): criar/editar/concluir/excluir tarefas, vínculo opcional
-  com contato e lead, responsável, data de vencimento com badge de atraso,
-  filtro Todas/Pendentes/Concluídas. Permissões por papel
-  (`task.create/update/delete`) e RLS `tenant_isolation`.
-- **Plano**: workspace novo sempre Individual (sem seletor enganoso).
-- **Aceite de convite**: convite não é mais marcado ACCEPTED; "Aceito" é
-  derivado do vínculo (página de Equipe atualizada).
-- **Regressão**: todos os `verify_*` passando (inclui `verify_tasks.ts`),
-  `npm run build` e `npm run lint` limpos.
-- **Docs**: README, memória e `verify_tasks.ts` atualizados.
+- **LGPD**: `/privacy` (Política de Privacidade) e `/terms` (Termos de Uso)
+  públicas, com conteúdo PT-BR (operadora/controladora, direitos, exclusão,
+  segurança, contato). Links no rodapé da landing.
+- **CI**: workflow GitHub Actions (lint + build + `verify_*` com Postgres
+  service container + migrations + grant_app_user.sql). Roda em push/PR a master.
+- **Sentry**: `@sentry/nextjs` configurado (client/server/edge + instrumentation);
+  `withSentryConfig` condicional (só roda se `SENTRY_AUTH_TOKEN` presente) —
+  build passa sem DSN. Variáveis em `.env.example`.
+- **`/tasks`**: criar/editar/concluir/excluir, vínculos, responsável, vencimento,
+  filtro, badge atraso, permissões + RLS.
+- **Auditoria/RLS/Hardening**: todas as fases anteriores intactas.
+- **Regressão**: todos `verify_*` passando + build + lint limpos.
 
 ## O que falta / atenção
-- DONO: testar /tasks na tela (criar, concluir, filtrar) e revisar
-  /settings + Equipe (aceito vs pendente).
-- Pendências registradas (não bloqueiam): e-mail de notificação de convite
-  (Resend) se desejado; billing real (assinatura libera outros planos);
-  renomear nome do produto; webhook do Clerk ainda opcional.
-- `npm audit`: 3 high no toolchain do Prisma CLI (risco aceito, não é runtime).
-- Próximas melhorias sugeridas pela análise de mercado (não implementadas):
-  CI no GitHub Actions, Sentry, documentos LGPD, link WhatsApp (wa.me),
-  confirmação reforçada de delete em CRM, múltiplos funis, campos customizados.
+- DONO: testar /privacy, /terms, /tasks na tela e confirmar finalização.
+- Pendências: e-mail de convite (Resend), billing real, nome do produto,
+  webhook Clerk opcional, deploy.
+- `npm audit`: 3 high no toolchain do Prisma CLI (risco aceito).
 
 ## Próximo passo
-1. DONO testar /tasks na tela e dar retorno.
-2. Decidir nome do produto e, se quiser, partir para CI + monitoramento + LGPD
-   (proteção operacional antes de vender) — ver análise de mercado do Claude.
+1. DONO testar /privacy, /terms, /tasks e dar retorno.
+2. Decidir nome do produto, configurar Sentry (DSN/token), ativar CI e deploy.

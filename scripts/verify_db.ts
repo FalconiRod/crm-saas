@@ -20,17 +20,24 @@ async function main() {
   console.log("PLANS:", plans.map((p) => `${p.key}(${p.name}, max_users=${p.maxUsers}, max_companies=${p.maxCompaniesPerAccount}, price=${p.priceCents})`).join(" | "));
   if (plans.length !== 3) throw new Error(`esperado 3 planos, veio ${plans.length}`);
 
-  // Limpeza prévia (idempotente).
+  // Limpeza prévia (idempotente): limpa dados CRM do tenant; o próprio tenant
+  // não é apagado pois a policy de DELETE exige OWNER (o tenant de teste não tem).
   await withTenant(TENANT_SMOKE, async (tx) => {
-    const existing = await tx.tenant.findUnique({ where: { id: TENANT_SMOKE } });
-    if (existing) await tx.tenant.delete({ where: { id: TENANT_SMOKE } });
+    await tx.crmLead.deleteMany();
+    await tx.crmContact.deleteMany();
+    await tx.crmCompany.deleteMany();
+    await tx.domainEvent.deleteMany();
   });
 
-  // 2) Cria tenant + company + contact + lead DENTRO do tenant.
+  // 2) Cria tenant (se não existe) + company + contact + lead DENTRO do tenant.
   await withTenant(TENANT_SMOKE, async (tx) => {
     const plan = await tx.plan.findFirst({ where: { key: "INDIVIDUAL" } });
     if (!plan) throw new Error("plano INDIVIDUAL ausente");
-    await tx.tenant.create({ data: { id: TENANT_SMOKE, name: "Tenant Smoke Test", planId: plan.id } });
+    await tx.tenant.upsert({
+      where: { id: TENANT_SMOKE },
+      update: {},
+      create: { id: TENANT_SMOKE, name: "Tenant Smoke Test", planId: plan.id },
+    });
     const company = await tx.crmCompany.create({ data: { tenantId: TENANT_SMOKE, name: "Empresa Teste" } });
     const contact = await tx.crmContact.create({ data: { tenantId: TENANT_SMOKE, name: "Contato Teste", crmCompanyId: company.id } });
     await tx.crmLead.create({ data: { tenantId: TENANT_SMOKE, contactId: contact.id, stage: "NOVO", value: 1500 } });
@@ -57,11 +64,14 @@ async function main() {
   console.log(blocked ? "OK: RLS bloqueou insert sem app.tenant_id (fail-closed)" : "FAIL: RLS NAO bloqueou insert sem tenant");
   if (!blocked) throw new Error("RLS não está ativo para INSERT");
 
-  // 6) Limpeza.
+  // 6) Limpeza: apaga dados CRM (o tenant de teste fica — policy de DELETE exige OWNER).
   await withTenant(TENANT_SMOKE, async (tx) => {
-    await tx.tenant.delete({ where: { id: TENANT_SMOKE } });
+    await tx.crmLead.deleteMany();
+    await tx.crmContact.deleteMany();
+    await tx.crmCompany.deleteMany();
+    await tx.domainEvent.deleteMany();
   });
-  console.log("OK: cleanup tenant smoke concluido");
+  console.log("OK: cleanup CRM data concluido");
 
   await prisma.$disconnect();
   console.log("SMOKE_OK");

@@ -52,3 +52,12 @@ _Regras descobertas ao longo do projeto. Não repetir erros._
 - CONFIRMADO (Fase 11): tabelas de CRM novas (crm_tasks etc.) herdam DML do
   `app_user` via ALTER DEFAULT PRIVILEGES — só é preciso a migration (criar
   tabela + RLS FORCE + policy `tenant_isolation`), sem GRANT manual.
+- CONFIRMADO (Fase 11): `DELETE` de `tenants` exige papel OWNER (policy por
+  comando do hardening). Testes que tentam apagar o tenant sem OWNER falham
+  (P2025); contornar com `upsert` + limpeza só de dados CRM.
+- CONFIRMADO (Fase 11): CI no GitHub Actions com Postgres service container
+  roda migrations + grant_app_user + todos `verify_*`. Build e lint também.
+  `SENTRY_AUTH_TOKEN` só necessário para upload de sourcemaps.
+- CONFIRMADO (Fase 11): Sentry SDK no-op sem DSN — build e dev funcionam sem
+  configurar Sentry; monitoramento ativa ao setar `SENTRY_DSN` +
+  `SENTRY_AUTH_TOKEN`.

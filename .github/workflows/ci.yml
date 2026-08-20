@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  # Usamos 'postgres' como nome do DB (padrão do container postgres)
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+  APP_DATABASE_URL: postgresql://app_user:app_user@localhost:5432/postgres
+  # Build não precisa de segredos do Clerk para type-check; se faltar, next.config ignora
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_dummy
+  CLERK_SECRET_KEY: sk_test_dummy
+
+jobs:
+  lint-and-build:
+    name: Lint + Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build (type-check + production build)
+        run: npm run build
+
+  db-tests:
+    name: Database tests (RLS + isolation)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U postgres; then break; fi
+            sleep 1
+          done
+
+      - name: Run migrations (owner role)
+        run: npx prisma migrate deploy
+
+      - name: Configure app_user (RLS role)
+        run: |
+          psql "$DATABASE_URL" -f scripts/grant_app_user.sql
+          psql "$DATABASE_URL" -c "ALTER ROLE app_user WITH PASSWORD 'app_user' LOGIN;"
+
+      - name: Run smoke tests (verify_*)
+        run: |
+          for f in verify_db verify_tenancy verify_companies verify_contacts verify_leads verify_dashboard verify_team verify_hardening verify_tasks; do
+            echo "=== $f ==="
+            npx tsx scripts/$f.ts
+          done
+
+      - name: Build (ensure types still pass after DB tests)
+        run: npm run build

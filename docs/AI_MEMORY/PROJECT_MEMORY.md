@@ -22,6 +22,9 @@ NOVO → CONTATO → INTERESSADO → PROPOSTA → NEGOCIAÇÃO → GANHO / PERDI
 - CRM: empresas, contatos, leads/pipeline (kanban), **tarefas** (Fase 11 —
   lembrete vinculável a contato/lead, responsável e vencimento), dashboard com
   métricas, times/convites por e-mail, configurações do workspace.
+- **Operacional (Fase 11b)**: LGPD (Política de Privacidade `/privacy` + Termos
+  `/terms` públicos), CI no GitHub Actions (lint + build + testes de isolamento
+  com Postgres), Sentry (monitoramento de erro, build condicional sem DSN).
 
 ## Modelo de receita
 Planos INDIVIDUAL / TEAM / AGENCY com limites (`max_users`,

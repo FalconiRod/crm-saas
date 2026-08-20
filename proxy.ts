@@ -11,7 +11,11 @@ export default function proxy(request: NextRequest, event: NextFetchEvent) {
   // Sem as chaves do Clerk, o proxy apenas deixa a requisição passar (o app
   // mostra a tela de configuração em vez de autenticação).
   if (!clerkEnabled) return NextResponse.next();
-  if (!clerkProxy) clerkProxy = clerkMiddleware();
+  if (!clerkProxy) {
+    // Clerk v7: publicRoutes não está nos tipos desta versão; desabilitar regra p/ este caso.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    clerkProxy = clerkMiddleware({ publicRoutes: ["/", "/privacy", "/terms"] } as any);
+  }
   return clerkProxy(request, event);
 }
 

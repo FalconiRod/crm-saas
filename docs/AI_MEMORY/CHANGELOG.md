@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 11: Operacional (LGPD + CI + Sentry)
+- **LGPD**: páginas públicas `/privacy` (Política de Privacidade) e `/terms`
+  (Termos de Uso) com conteúdo em PT-BR (operadora vs controladora, retenção,
+  exclusão, contato). Liberadas no `clerkMiddleware` via `publicRoutes`. Links
+  no rodapé da landing page.
+- **CI**: workflow `.github/workflows/ci.yml` com dois jobs: `lint-and-build`
+  (lint + build) e `db-tests` (PostgreSQL 16 service container → migrations
+  deploy + grant_app_user.sql + todos `verify_*` + build). Roda em push/PR.
+- **Sentry**: `@sentry/nextjs` instalado; configs `sentry.client.config.ts`,
+  `sentry.server.config.ts`, `sentry.edge.config.ts` + `instrumentation.ts`;
+  `next.config.ts` wrapa com `withSentryConfig` apenas se `SENTRY_AUTH_TOKEN`
+  presente (build passa sem DSN). Variáveis em `.env.example`.
+- **verify_db**: cleanup ajustado — tenant de teste não é deletado (policy
+  DELETE exige OWNER); limpa apenas dados CRM. Usa `upsert` do tenant.
+- **Regressão completa**: todos `verify_*` passando + build + lint limpos.
+
 ## 2026-08-20 — Fase 11: Tarefas (CRM central)
 - Migration `20260820001000_crm_tasks` aplicada: tabela `crm_tasks` (title,
   notes, due_at, status PENDING/DONE, contact_id?, lead_id? SetNull,

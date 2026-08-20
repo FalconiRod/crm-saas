@@ -77,3 +77,16 @@ Formato: ID / OBJETIVO / CONTEXTO / REQUISITOS / ESTADO / PENDÊNCIAS
 - PENDÊNCIAS: dono testar /tasks na tela; melhorias futuras sugeridas pela
   análise de mercado (CI, Sentry, LGPD, wa.me, confirmação de delete, funis,
   campos customizados).
+
+## T12 — Fase 11 (Operacional): LGPD + CI + Sentry — CONCLUÍDA (2026-08-20)
+- LGPD: `/privacy` + `/terms` (públicas, `publicRoutes` no Clerk), links no
+  rodapé da landing; conteúdo PT-BR (operadora/controladora, direitos, exclusão).
+- CI: `.github/workflows/ci.yml` (lint+build + db-tests com Postgres 16 service
+  container, migrations deploy, grant_app_user.sql, todos `verify_*`).
+- Sentry: `@sentry/nextjs` + 3 configs + instrumentation + `withSentryConfig`
+  condicional; build passa sem DSN; variáveis em `.env.example`.
+- `verify_db`: cleanup corrigido (tenant não deletado por falta de OWNER; usa
+  upsert + limpa só dados CRM).
+- Regressão completa OK (todos `verify_*`, build, lint).
+- PENDÊNCIAS: dono testar /privacy, /terms, /tasks; configurar Sentry (DSN/
+  token), ativar CI, deploy.

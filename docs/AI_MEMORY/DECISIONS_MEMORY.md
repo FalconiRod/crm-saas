@@ -214,3 +214,37 @@ Formato: DECISÃO / DATA / MOTIVO / CONTEXTO / ALTERNATIVAS / IMPACTO / STATUS
 - IMPACTO: regra registrada — novo vínculo FK entre tabelas de tenant DEVE ter
   validação na action (não confiar só na FK/RLS).
 - STATUS: DECIDIDO e TESTADO (verify_tasks).
+
+## D22 — Sentry configurado com build condicional (sem DSN = no-op)
+- DATA: 2026-08-20
+- MOTIVO: adicionar monitoramento de erro em produção (plano grátis generoso do
+  Sentry) sem quebrar o build local/CI sem DSN. A SDK no-op se DSN ausente.
+- CONTEXTO: `@sentry/nextjs` instalado; 4 arquivos de config + `instrumentation.ts`;
+  `next.config.ts` usa `withSentryConfig` condicional (só aplica se
+  `SENTRY_AUTH_TOKEN` + org + project presentes). Upload de sourcemaps só com token.
+- ALTERNATIVAS: inicializar Sentry só no servidor (menos cobertura); Logtail/Datadog.
+- IMPACTO: build limpo sem segredos; monitoramento ativo ao configurar DSN.
+- STATUS: DECIDIDO e TESTADO (build + lint OK sem DSN).
+
+## D23 — CI no GitHub Actions com Postgres service container
+- DATA: 2026-08-20
+- MOTIVO: garantir que alterações futuras não quebrem o isolamento (RLS) nem o
+  build/lint. O workflow roda `lint-and-build` (rápido, sem DB) e `db-tests`
+  (Postgres 16 container → migrations deploy → grant_app_user.sql → todos
+  `verify_*` + build). Roda em push/PR para master.
+- CONTEXTO: usa `DATABASE_URL` (dono) e `APP_DATABASE_URL` (app_user) no container;
+  `scripts/grant_app_user.sql` idempotente cria papel `app_user` e seta senha.
+- ALTERNATIVAS: apenas lint+build (não testa RLS); Neon branch efêmero via API.
+- IMPACTO: proteção real do isolamento a cada push; feedback rápido.
+- STATUS: DECIDIDO; workflow criado (precisa testar no GitHub Actions real).
+
+## D24 — LGPD: documentos públicos (Política + Termos) com links no rodapé
+- DATA: 2026-08-20
+- MOTIVO: bloqueante legal para vender B2B; plataformas são operadoras,
+  tenants são controladores. Documentos PT-BR cobrindo: dados processados,
+  base legal, compartilhamento, retenção/exclusão, segurança, contato.
+- CONTEXTO: páginas `/privacy` e `/terms` (estáticas, sem auth) via
+  `publicRoutes` no `clerkMiddleware`; links no rodapé da landing (`app/page.tsx`).
+- ALTERNATIVAS: documentos só no dashboard (menos acessíveis); termo genérico.
+- IMPACTO: conformidade básica LGPD; base para futuros DPA/contratos.
+- STATUS: DECIDIDO e TESTADO (páginas 200 públicas, links no footer).

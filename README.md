@@ -17,6 +17,9 @@ empresa, e quem administra várias empresas (agência/consultor).
 - CRM: empresas, contatos, pipeline de leads (kanban por estágio) e tarefas
   (lembretes vinculados a contato/lead, com responsável e vencimento) — limites por plano.
 - Dashboard com métricas (cartões, funil, leads recentes, filtro de período).
+- **LGPD**: Política de Privacidade (`/privacy`) e Termos de Uso (`/terms`) públicas.
+- **CI**: GitHub Actions (lint + build + testes de isolamento com Postgres).
+- **Sentry**: monitoramento de erro configurado (opcional, build sem DSN).
 - Times: convidar por e-mail (aceite automático ao logar), papéis
   (Dono/Administrador/Gerente/Membro/Somente leitura) e permissões por papel.
 - Configurações do workspace (renomear / excluir, só o dono).
@@ -39,6 +42,11 @@ npm run dev            # http://localhost:3000
 | `NEXT_PUBLIC_CLERK_*` | Chave pública do Clerk + URLs de login/cadastro. |
 | `CLERK_SECRET_KEY` | Chave secreta do Clerk (só servidor). |
 | `CLERK_WEBHOOK_SIGNING_SECRET` | Validação do webhook de sync de usuários (`whsec_...`). |
+| `SENTRY_DSN` | DSN do Sentry (monitoramento de erro). Opcional. |
+| `NEXT_PUBLIC_SENTRY_DSN` | DSN público do Sentry (client-side). Opcional. |
+| `SENTRY_AUTH_TOKEN` | Token de auth do Sentry (para upload de sourcemaps no build). Opcional. |
+| `SENTRY_ORG` | Org do Sentry. Opcional. |
+| `SENTRY_PROJECT` | Projeto do Sentry. Opcional. |
 
 ### Preparar o banco (Neon)
 
@@ -78,6 +86,19 @@ npx tsx scripts/verify_team.ts        # convites, papéis, permissões
 npx tsx scripts/verify_hardening.ts   # bloqueios de RLS (escalada/tamper)
 npx tsx scripts/verify_tasks.ts       # tarefas (CRUD, vínculos, permissões)
 ```
+
+## CI (GitHub Actions)
+
+Workflow `.github/workflows/ci.yml` roda em push/PR:
+- **lint-and-build**: `npm run lint` + `npm run build` (sem DB).
+- **db-tests**: Postgres 16 container → `prisma migrate deploy` →
+  `scripts/grant_app_user.sql` → todos `verify_*` + build.
+
+## Sentry
+
+Instale `@sentry/nextjs` (já no projeto). Configure no `.env`:
+`SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`,
+`SENTRY_PROJECT`. Sem DSN, a SDK no-op e o build passa.
 
 ## Checagens de qualidade
 

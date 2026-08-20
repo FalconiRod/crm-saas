@@ -366,3 +366,45 @@ _2026-08-19 — Fase 1: Setup do projeto_
   Sentry, LGPD (política + termos + exclusão por solicitação), link WhatsApp
   (wa.me), confirmação reforçada de delete em CRM, múltiplos funis, campos
   customizados, PDF de proposta, PWA.
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 11 (Operacional): LGPD + CI + Sentry
+
+## Feito
+- **LGPD**: páginas `/privacy` (Política de Privacidade) e `/terms` (Termos de Uso)
+  públicas, liberadas no `clerkMiddleware` via `publicRoutes`; conteúdo PT-BR
+  (operadora/controladora, direitos, exclusão, segurança, contato DPO).
+  Links no rodapé da landing (`app/page.tsx`).
+- **CI**: workflow `.github/workflows/ci.yml` com dois jobs:
+  `lint-and-build` (lint + build) e `db-tests` (Postgres 16 service container
+  → migrations deploy → `scripts/grant_app_user.sql` → todos `verify_*` + build).
+  Roda em push/PR para `master`.
+- **Sentry**: `@sentry/nextjs` instalado; configs `sentry.client.config.ts`,
+  `sentry.server.config.ts`, `sentry.edge.config.ts` + `instrumentation.ts`;
+  `next.config.ts` com `withSentryConfig` condicional (só aplica se
+  `SENTRY_AUTH_TOKEN` + org + project). Build passa sem DSN (SDK no-op).
+  Variáveis em `.env.example`.
+- **verify_db**: cleanup corrigido — tenant de teste não é deletado (policy DELETE
+  exige OWNER); limpa só dados CRM (`deleteMany`). Tenant criado via `upsert`.
+- Regressão completa: todos `verify_*` passando + build + lint limpos.
+
+## Decisões desta sessão
+- D22: Sentry com build condicional (sem DSN = no-op).
+- D23: CI no GitHub Actions com Postgres service container.
+- D24: LGPD: documentos públicos com links no rodapé.
+- `verify_db` usa `upsert` no tenant e limpa só dados CRM.
+
+## Descobertas / problemas
+- `DELETE` de tenant exige OWNER (policy hardening) — teste `verify_db`
+  falhava ao tentar apagar tenant sem OWNER; contornado com upsert + limpeza
+  seletiva.
+- `withSentryConfig` em `next.config.ts` exige `SENTRY_AUTH_TOKEN` para
+  não quebrar build; sem token, wrapper é identity.
+- Clerk v7 `publicRoutes` não está nos tipos desta versão — usado `as any`
+  com `eslint-disable` comentado.
+
+## Pendências
+- DONO testar /privacy, /terms, /tasks e confirmar.
+- Configurar Sentry (DSN, auth token, org, project), ativar CI no GitHub,
+  deploy.

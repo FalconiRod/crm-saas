@@ -10,10 +10,11 @@ Tailwind + Prisma 7 + Neon/Postgres + Clerk). Atende 3 perfis no mesmo produto
 multi-tenant é o requisito inegociável** e é garantido por RLS no Postgres.
 
 ## Estado atual
-- **10 fases do briefing implementadas e verificadas + Fase 11 (Tarefas).**
-  Último commit: `010a4a6` (Fase 11 — após o push desta sessão).
+- **10 fases do briefing + Fase 11 (Operacional: LGPD, CI, Sentry) implementadas e verificadas.**
+  Último commit: `d899828` (após Fase 11).
 - Repo público do dono: `https://github.com/FalconiRod/crm-saas` (branch `master`).
-- Backup em `D:\PROJETOS\BACKUPS\BACKUP_CRM_SAAS_2026-08-20` (refresh na Fase 11).
+- Tudo commitado/pushado; working tree limpo. Backup em
+  `D:\PROJETOS\BACKUPS\BACKUP_CRM_SAAS_2026-08-20` (refresh na Fase 11).
 
 ## Como rodar local
 ```bash
@@ -40,6 +41,8 @@ npm run dev            # http://localhost:3000
 - **Vínculos FK cruzados entre tenants**: FK IGNORA RLS — todo vínculo
   (contato/lead/empresa/responsável) é validado NA ACTION dentro do tenant ativo
   (`findUnique` → NULL → recusa). Novo vínculo = validar na action (D21).
+- **DELETE de tenant**: exige papel OWNER (policy hardening). Testes sem OWNER
+  falham (P2025); contornar com `upsert` + limpeza só de dados CRM.
 - **Aceite de convite**: roda no bootstrap (`lib/session.ts`), cria o vínculo e
   NÃO marca o convite ACCEPTED (estado derivado do vínculo na página de Equipe).
   Não reintroduzir `invitation.update` no fluxo de aceite.
@@ -65,18 +68,17 @@ lógica. No Windows usar `npm.cmd`/`npx.cmd`; PowerShell trata stderr do git
 como erro (push OK mesmo assim); reiniciar o `next dev` após mudanças no schema.
 
 ## Pendências / próximos passos (decidir com o dono)
-- DONO testar `/tasks` na tela; revisão final de `/settings` e Equipe.
+- DONO testar `/privacy`, `/terms`, `/tasks` na tela; revisão final de
+  `/settings` e Equipe.
 - Nome do produto (hoje provisório "crm-saas").
 - Billing real (hoje todo workspace novo é INDIVIDUAL; outros planos são seeds).
 - E-mail de notificação de convite (Resend) — hoje o convite é "silencioso".
 - Deploy (README tem instruções; Vercel recomendado).
+- Configurar Sentry: criar projeto, copiar DSN + `SENTRY_AUTH_TOKEN` + org/project.
+- Ativar CI no GitHub Actions (workflow já existe, precisa rodar no Actions real).
 - `npm audit`: 3 high em `deepmerge-ts` via Prisma CLI (toolchain de dev, risco
   aceito — correção exigiria downgrade do Prisma).
 - Webhook do Clerk ainda opcional (o painel sincroniza `users` no login).
-- Sugeridos pela análise de mercado do Claude (não implementados): CI no GitHub
-  Actions, Sentry, LGPD (política + termos), link WhatsApp (wa.me), confirmação
-  reforçada de delete em CRM, múltiplos funis, campos customizados, PDF de
-  proposta, PWA.
 
 ## Estrutura rápida
 - `app/` — rotas/páginas: `/dashboard`, `/companies`, `/contacts`, `/leads`,
