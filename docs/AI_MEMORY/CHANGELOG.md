@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 8: Dashboard/Relatórios (métricas reais do funil)
+- `app/dashboard/page.tsx` — painel com cartões (Empresas, Contatos, Leads,
+  Ganhos, Conversão), funil por estágio em barras (GANHO verde/PERDIDO
+  vermelho), leads recentes (5 últimos) e filtro de período (7/30/90 dias,
+  tudo) via `?p=`. Métricas calculadas no servidor com escopo RLS.
+- `scripts/verify_dashboard.ts` → **DASHBOARD_OK** (ganhos R$ 1.500,00,
+  conversão 40%, 2 em aberto a partir de 5 leads de teste).
+
 ## 2026-08-20 — Fase 7: Leads/Pipeline (crm_leads + kanban)
 - Migration `20260820000600_lead_limits` aplicada: coluna `max_leads` em
   `plans` (null = ilimitado por ora).

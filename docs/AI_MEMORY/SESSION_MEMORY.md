@@ -235,3 +235,26 @@ _2026-08-19 — Fase 1: Setup do projeto_
 ## Pendências
 - DONO testar /leads e confirmar Fase 8.
 - Aguardar confirmação para a Fase 8 (Dashboard/Relatórios).
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 8: Dashboard/Relatórios
+
+## Feito
+- Painel com cartões (Empresas/Contatos/Leads/Ganhos/Conversão), funil em
+  barras por estágio, leads recentes e filtro de período (?p=7/30/90/tudo).
+- `scripts/verify_dashboard.ts` → DASHBOARD_OK.
+
+## Decisões desta sessão
+- Métricas calculadas no servidor a partir dos dados do tenant (RLS), sem
+  agregações SQL complexas no MVP (volume baixo). Se crescer, partir para
+  agregação no banco.
+- Filtro de período via searchParams (sem estado no client); leads recentes
+  sempre dos últimos 5 independentes do filtro.
+
+## Descobertas / problemas
+- Nenhuma mudança de schema nesta fase (só página + shared).
+
+## Pendências
+- DONO testar /dashboard e confirmar Fase 9.
+- Aguardar confirmação para a Fase 9 (Times/Papéis).

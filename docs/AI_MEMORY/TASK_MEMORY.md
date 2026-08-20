@@ -46,7 +46,13 @@ Formato: ID / OBJETIVO / CONTEXTO / REQUISITOS / ESTADO / PENDÊNCIAS
   auditoria; kanban por estágio em `/leads`; `verify_leads.ts` → LEADS_OK.
 - PENDÊNCIAS: dono testar na tela.
 
-## T8 — Fase 8: Dashboard/Relatórios — PENDENTE (próxima)
-- Métricas reais do funil (leads por estágio, ganhos, conversão, contatos/
-  empresas) no painel; filtros simples por período.
-- REQUISITOS: dono confirmar a Fase 7.
+## T8 — Fase 8: Dashboard/Relatórios — CONCLUÍDA (2026-08-20)
+- Painel com cartões (Empresas/Contatos/Leads/Ganhos/Conversão), funil por
+  estágio em barras, leads recentes e filtro 7/30/90/tudo; métricas RLS-scoped.
+- `verify_dashboard.ts` → DASHBOARD_OK.
+- PENDÊNCIAS: dono testar na tela.
+
+## T9 — Fase 9: Times/Papéis — PENDENTE (próxima)
+- Convidar membros para o workspace com papéis (OWNER/ADMIN/MANAGER/USER/
+  VIEWER); respeitar maxUsers do plano; permissões por papel nas ações de CRM.
+- REQUISITOS: dono confirmar a Fase 8.

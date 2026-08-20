@@ -1,25 +1,26 @@
 # CURRENT_STATE
 
 ## Onde estamos
-**Fase 7 — Leads/Pipeline (crm_leads + kanban): IMPLEMENTADA, aguardando teste
-do dono.** Funil em colunas por estágio, valor/probabilidade, mover lead entre
-estágios, badge de ganhos. Verificado por script (`LEADS_OK`). Próximo: o dono
-testar /leads e confirmar para a Fase 8 (Dashboard/relatórios).
+**Fase 8 — Dashboard/Relatórios: IMPLEMENTADA, aguardando teste do dono.**
+Painel com cartões (Empresas/Contatos/Leads/Ganhos/Conversão), funil por estágio
+em barras, leads recentes e filtro de período (7/30/90 dias/tudo). Métricas
+verificadas por script (`DASHBOARD_OK`). Próximo: o dono testar /dashboard e
+confirmar para a Fase 9 (Times/Papéis).
 
 ## O que funciona
-- **Leads**: página `/leads` com kanban (NOVO, CONTATO, INTERESSADO, PROPOSTA,
-  NEGOCIACAO, GANHO, PERDIDO), criação/edição (contato obrigatório), mover de
-  estágio no card, excluir, badge "Ganhos" (soma de valor dos GANHO). Auditoria
-  por domain_event. `max_leads` no plano (ilimitado por ora).
-- Fases 1–6 seguem funcionando (auth, tenancy, workspaces, empresas, contatos).
+- **Dashboard**: métricas reais com escopo RLS do tenant ativo; funil visual;
+  ganhos = soma dos leads GANHO; conversão = GANHO/total; leads recentes;
+  filtro de período via `?p=`.
+- Fases 1–7 seguem funcionando (auth, tenancy, workspaces, empresas, contatos,
+  leads/kanban).
 
 ## O que falta / atenção
-- DONO: testar Leads em http://localhost:3000/leads e confirmar Fase 8.
+- DONO: testar o painel em http://localhost:3000/dashboard e confirmar Fase 9.
 - Webhook do Clerk ainda opcional.
 - Inspecionar 3 vulnerabilidades high do `npm audit`.
 - Renomear/excluir workspace ainda não existe (não é bloqueio).
 
 ## Próximo passo
-Fase 8 — Dashboard/Relatórios: visão geral com métricas reais do funil
-(leads por estágio, ganhos, taxa de conversão, contatos/empresas) e filtros.
-**Aguardar confirmação do dono.**
+Fase 9 — Times/Papéis: convidar membros para o workspace com papéis
+(OWNER/ADMIN/MANAGER/USER/VIEWER), respeitando `maxUsers` do plano, com permissões
+por papel (quem pode criar/editar/apagar). **Aguardar confirmação do dono.**
