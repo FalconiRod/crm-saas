@@ -33,7 +33,14 @@ Formato: ID / OBJETIVO / CONTEXTO / REQUISITOS / ESTADO / PENDÊNCIAS
   excluir); `verify_companies.ts` → COMPANIES_OK. Dono cadastrou 1 empresa e o
   limite bloqueou a 2ª.
 
-## T6 — Fase 6: Contatos (crm_contacts) — PENDENTE (próxima)
-- CRUD de contatos (nome, telefone, e-mail, tags, origem) opcionalmente
-  vinculados a empresa; limites por plano (próximo plano: maxContacts?).
-- REQUISITOS: dono confirmar a Fase 5.
+## T6 — Fase 6: Contatos (crm_contacts) — CONCLUÍDA (2026-08-20)
+- Migration `20260820000500_plan_limits` (max_contacts + limite de empresas=5
+  no banco); actions create/update/delete com vínculo de empresa validado, tags,
+  origem, RLS e auditoria; página `/contacts` com busca; `verify_contacts.ts` →
+  CONTACTS_OK.
+- PENDÊNCIAS: dono testar na tela.
+
+## T7 — Fase 7: Leads/Pipeline (crm_leads) — PENDENTE (próxima)
+- CRUD de leads (contato obrigatório, estágio do funil, valor, probabilidade);
+  kanban simples por estágio (NOVO→GANHO/PERDIDO); limites por plano.
+- REQUISITOS: dono confirmar a Fase 6.

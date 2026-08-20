@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireWorkspaceAccess, withActiveTenant } from "@/lib/session";
-import { PLAN_LIMITS, type PlanKey } from "@shared/index";
 
 // Campos opcionais comuns entre criar/editar.
 function collectFields(formData: FormData) {
@@ -17,13 +16,13 @@ function collectFields(formData: FormData) {
   };
 }
 
-/** Limite de empresas por plano (maxCompaniesPerAccount; null = ilimitado). */
+/** Limite de empresas por plano (lido do plano no banco; null = ilimitado). */
 async function getPlanLimit(tenantId: string) {
   const tenant = await withActiveTenant(tenantId, (tx) =>
     tx.tenant.findUnique({ where: { id: tenantId }, include: { plan: true } })
   );
   if (!tenant) throw new Error("Empresa do workspace não encontrada.");
-  return PLAN_LIMITS[tenant.plan.key as PlanKey].maxCompaniesPerAccount;
+  return tenant.plan.maxCompaniesPerAccount;
 }
 
 /** Cria uma empresa-cliente no workspace ativo. */

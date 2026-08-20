@@ -172,3 +172,36 @@ _2026-08-19 — Fase 1: Setup do projeto_
 ## Pendências
 - DONO testar /companies e confirmar Fase 6.
 - Aguardar confirmação para a Fase 6 (Contatos).
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 6: Contatos + limite de 5 empresas
+
+## Feito
+- Migration `20260820000500_plan_limits` (max_contacts; limite de empresas 5
+  para INDIVIDUAL/TEAM no banco).
+- Limite de empresas agora lido do plano no banco (enforcement + tela).
+- `crm/contacts/actions.ts` (create/update/delete + vínculo de empresa validado
+  + tags + origem + RLS + domain_event); página `/contacts` com busca;
+  ContactForm + DeleteContact (client).
+- Link "Contatos" no cabeçalho do dashboard (nav Empresas | Contatos).
+- `scripts/verify_contacts.ts` → CONTACTS_OK.
+
+## Decisões desta sessão
+- Fonte da verdade dos limites = plano no BANCO (maxCompaniesPerAccount/
+  maxContacts), não mais o `PLAN_LIMITS` fixo do código — evita divergência
+  quando o plano mudar.
+- `max_contacts` adicionado já com default ilimitado (null) para todos os
+  planos — pronto para cobrança futura, sem mudança de comportamento agora.
+- Busca de contatos feita no servidor (searchParams q) — simples e sem estado
+  no client.
+
+## Descobertas / problemas
+- Campo `tags` é `String[]` no Prisma — chega do form como texto separado por
+  vírgula e é convertido na action (parseTags).
+- O dev server precisa de restart após alterar o schema (Turbopack guarda o
+  client antigo em cache — 2ª ocorrência na sessão).
+
+## Pendências
+- DONO testar /contacts e confirmar Fase 7.
+- Aguardar confirmação para a Fase 7 (Leads/Pipeline).

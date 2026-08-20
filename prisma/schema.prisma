@@ -51,6 +51,7 @@ model Plan {
   name                    String
   maxUsers                Int? @map("max_users") // null = ilimitado
   maxCompaniesPerAccount  Int? @map("max_companies_per_account") // null = ilimitado
+  maxContacts             Int? @map("max_contacts") // null = ilimitado
   priceCents              Int      @default(0) @map("price_cents")
   tenants                 Tenant[]
 

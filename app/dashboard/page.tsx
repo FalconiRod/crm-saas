@@ -123,12 +123,20 @@ export default async function DashboardPage() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href="/companies"
-            className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-black dark:hover:bg-zinc-300"
-          >
-            Empresas
-          </Link>
+          <nav className="flex items-center gap-2">
+            <Link
+              href="/companies"
+              className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Empresas
+            </Link>
+            <Link
+              href="/contacts"
+              className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Contatos
+            </Link>
+          </nav>
           <UserButton />
         </div>
       </header>

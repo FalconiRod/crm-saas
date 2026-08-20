@@ -11,12 +11,16 @@ export type PipelineStage =
   | "GANHO"
   | "PERDIDO";
 
-/** Papéis permitidos por plano (limites aplicados na Fase 9). */
+/** Papéis permitidos por plano (limites aplicados no servidor). */
 export const PLAN_LIMITS: Record<
   PlanKey,
-  { maxUsers: number | null; maxCompaniesPerAccount: number | null }
+  {
+    maxUsers: number | null;
+    maxCompaniesPerAccount: number | null;
+    maxContacts: number | null;
+  }
 > = {
-  INDIVIDUAL: { maxUsers: 1, maxCompaniesPerAccount: 1 },
-  TEAM: { maxUsers: 10, maxCompaniesPerAccount: 1 },
-  AGENCY: { maxUsers: 50, maxCompaniesPerAccount: null },
+  INDIVIDUAL: { maxUsers: 1, maxCompaniesPerAccount: 5, maxContacts: null },
+  TEAM: { maxUsers: 10, maxCompaniesPerAccount: 5, maxContacts: null },
+  AGENCY: { maxUsers: 50, maxCompaniesPerAccount: null, maxContacts: null },
 };

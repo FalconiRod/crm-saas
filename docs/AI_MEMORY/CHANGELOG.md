@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 6: Contatos (CRUD de crm_contacts) + limite de 5 empresas
+- Migration `20260820000500_plan_limits` aplicada: coluna `max_contacts` em
+  `plans`; `max_companies_per_account` passa a **5** em INDIVIDUAL e TEAM
+  (AGENCY permanece ilimitado).
+- Limite de empresas agora é lido do plano no banco (fonte da verdade) tanto no
+  enforcement (`crm/companies/actions.ts`) quanto na tela (`/companies`).
+- `crm/contacts/actions.ts` — `createContact`/`updateContact`/`deleteContact`
+  com vínculo opcional com empresa (validado no mesmo workspace), tags,
+  origem, RLS e auditoria (`contact.created/updated/deleted`).
+- `app/contacts/page.tsx` — lista com busca (nome/e-mail/telefone), formulário
+  (criar/editar via `?edit=id`), vínculo com empresa, tags, exclusão com
+  confirmação. Componentes client: `ContactForm.tsx`, `DeleteContact.tsx`.
+- Dashboard: link "Contatos" no cabeçalho (navegação Empresas | Contatos).
+- `scripts/verify_contacts.ts` → **CONTACTS_OK** (limite 5, contatos, vínculo,
+  tags, busca, edição, isolamento, exclusão, cleanup).
+
 ## 2026-08-20 — Fase 5: Empresas (CRUD de crm_companies)
 - Migration `20260820000400_crm_company_fields` aplicada: colunas `cnpj` e
   `city` em `crm_companies`.

@@ -80,6 +80,16 @@ Formato: DECISÃO / DATA / MOTIVO / CONTEXTO / ALTERNATIVAS / IMPACTO / STATUS
   código; próximas fases herdam o padrão.
 - STATUS: DECIDIDO.
 
+## D14 — Limites de plano lidos do banco (não mais fixos no código)
+- DATA: 2026-08-20
+- MOTIVO: ao mudar o limite de empresas para 5, o valor existia em dois lugares
+  (PLAN_LIMITS no código e max_companies_per_account no banco). Passamos a ler
+  do banco (plano do tenant) tanto no enforcement quanto na UI; `PLAN_LIMITS`
+  fica apenas como definição/seed inicial. Adicionado `max_contacts` (null =
+  ilimitado por ora).
+- IMPACTO: mudar limites = UPDATE no banco + seed, sem deploy de código.
+- STATUS: DECIDIDO.
+
 ## D13 — CRUD de CRM via server actions + RLS, com limite validado no servidor
 - DATA: 2026-08-20
 - MOTIVO: autorização sempre no servidor. Cada action: `requireWorkspaceAccess`
