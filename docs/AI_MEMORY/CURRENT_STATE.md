@@ -1,27 +1,29 @@
 # CURRENT_STATE
 
 ## Onde estamos
-**Fase 2 — Banco de dados: CONCLUÍDA (aguardando confirmação do dono).**
-Schema completo, 3 migrations APLICADAS no Neon, RLS **verificado de verdade**
-(smoke test `SMOKE_OK` com o papel `app_user`). Falta reportar ao dono e, após
-confirmação, partir para a Fase 3 (Clerk).
+**Fase 3 — Autenticação com Clerk: CONCLUÍDA (falta o dono configurar o webhook).**
+Login/cadastro/páginas protegidas funcionando e testados. Pendência do dono:
+criar o webhook no painel do Clerk e colar o `signing secret` para a tabela
+`users` ser populada. Aguardando confirmação para a Fase 4 (tenancy + workspace).
 
 ## O que funciona
-- Projeto Next.js 16 + TS + Tailwind roda (`npm run dev`).
-- Prisma 7: schema validado; migrations `init`, `add_row_level_security`,
-  `seed_plans` **aplicadas** no Neon (`prisma migrate status`: up to date).
-- **Isolamento multi-tenant via RLS funcionando**: conexão da app usa papel
-  `app_user` (sem BYPASSRLS); teste `npx tsx scripts/verify_db.ts` passa todos os
-  cenários (leitura dentro do tenant, outro tenant vê 0, INSERT sem tenant bloqueado).
-- Estrutura `/core`, `/crm`, `/prisma`, `/packages/shared`, `/microapps` + memória.
+- Clerk ativo (chaves no `.env`): `/sign-in`, `/sign-up` renderizam o Clerk;
+  `/dashboard` é protegida (sem sessão → redireciona para /sign-in).
+- `proxy.ts` (antigo middleware, novo nome do Next 16) roda `clerkMiddleware()`.
+- Webhook `/api/webhooks/clerk` pronto (verifica assinatura; cria/atualiza/apaga
+  `users`); falta apenas o `CLERK_WEBHOOK_SIGNING_SECRET` real.
+- Banco: 3 migrations aplicadas; RLS verificado (`app_user` sem BYPASSRLS);
+  `prisma migrate status`: up to date.
+- Build de produção OK.
 
 ## O que falta / atenção
-- Reportar o fim da Fase 2 ao dono (o que foi feito, como testar, arquivos) e
-  aguardar confirmação antes da Fase 3 (Clerk).
-- Inspecionar as 3 vulnerabilidades high do `npm audit` (a inspecionar).
-- Deploy final: definir `APP_DATABASE_URL` (app_user) e `DATABASE_URL` (dono)
-  como secrets na Vercel/Cloudflare (nunca no código).
+- DONO: configurar webhook no painel do Clerk (eventos user.created/updated/
+  deleted) e colar o `whsec_...` em `CLERK_WEBHOOK_SIGNING_SECRET` no `.env`.
+- Testar cadastro/login de verdade (primeiro login grava o usuário em `users`).
+- Inspecionar 3 vulnerabilidades high do `npm audit`.
+- Deploy: chaves do Clerk + Neon como secrets no host (nunca no código).
 
 ## Próximo passo
-Fase 3 — Autenticação com Clerk: rota webhook de sincronização
-Clerk→`users`, login/register, perfil. **Aguardar confirmação do dono.**
+Fase 4 — Tenancy + workspace: criar `tenant` (workspace) para o usuário logado,
+helper de tenancy (`set_config('app.tenant_id')` em transação), tela de
+configuração do workspace. **Aguardar confirmação do dono.**

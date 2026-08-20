@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 3: Autenticação com Clerk integrada
+- Instalados `@clerk/nextjs@7.7.9` e `svix@2.0.0`.
+- `lib/clerk.ts` — guarda `clerkEnabled`: o app funciona (e builda) mesmo sem as
+  chaves, mostrando uma tela de configuração (evita quebrar antes do dono
+  configurar). Clerk só liga com as 2 chaves presentes.
+- `proxy.ts` (Next 16: middleware agora chama-se proxy) — `clerkMiddleware()`
+  quando habilitado; pass-through quando não.
+- `app/layout.tsx` — `ClerkProvider` condicional (só quando habilitado).
+- Páginas: `/` (landing com Entrar/Criar conta conforme sessão), `/sign-in`,
+  `/sign-up` (componentes Clerk), `/dashboard` (protegida: redireciona para
+  /sign-in sem sessão; mostra perfil + UserButton + módulos "Em breve").
+- Webhook `app/api/webhooks/clerk/route.ts` — sincroniza Clerk→`users`
+  (`user.created/updated` via upsert por `authProviderId`; `user.deleted`).
+  Assinatura verificada com `verifyWebhook` (Svix).
+- `.env`/`.env.example` com chaves do Clerk + URLs de redirecionamento;
+  `CLERK_WEBHOOK_SIGNING_SECRET` pendente (dono precisa criar o webhook).
+- Build OK; teste de produção OK (`/` 200, `/sign-in` 200, `/dashboard` 307→/sign-in).
+- PENDENTE: dono configurar o webhook no painel do Clerk e colar o signing
+  secret; testar cadastro/login de verdade (webhook popula `users`).
+
 ## 2026-08-20 — Fase 2: migrations APLICADAS no Neon + RLS verificado (SMOKE_OK)
 - Migrations aplicadas no Neon (`prisma migrate deploy`; `migrate status`: up to date).
 - DESCOBERTA CRÍTICA: o papel dono do Neon (`neondb_owner`) tem `BYPASSRLS=true`,

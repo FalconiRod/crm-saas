@@ -46,6 +46,29 @@ Formato: DECISÃO / DATA / MOTIVO / CONTEXTO / ALTERNATIVAS / IMPACTO / STATUS
   devDependency (usado pelo `prisma.config.ts`).
 - STATUS: CONFIRMADO no validate/generate.
 
+## D7 — Modo "configuração" do Clerk (app não quebra sem chaves)
+- DATA: 2026-08-20
+- MOTIVO: o build/deploy e o dev devem funcionar mesmo antes de o dono colar as
+  chaves. `lib/clerk.ts` expõe `clerkEnabled` (as 2 chaves presentes) e o app
+  mostra uma tela de instruções quando desabilitado, em vez de falhar.
+- CONTEXTO: layout (ClerkProvider condicional), proxy.ts (clerkMiddleware ou
+  pass-through), páginas de auth (mostram SetupRequired).
+- ALTERNATIVAS: exigir chaves sempre (quebra o build sem segredos); keyless mode
+  do Clerk (dependente de auto-provisionamento).
+- IMPACTO: fluxo simples para o dono; build CI sem segredos.
+- STATUS: DECIDIDO e TESTADO.
+
+## D8 — Webhook Clerk→banco usa `authProviderId` como chave única
+- DATA: 2026-08-20
+- MOTIVO: o `users.id` local é cuid (nosso); o id do Clerk fica em
+  `authProviderId` (unique nullable). O webhook faz `upsert` por essa coluna,
+  então primeiro login cria e mudanças de perfil atualizam sem duplicar.
+- CONTEXTO: eventos `user.created`, `user.updated`, `user.deleted`;
+  `verifyWebhook` (Svix) valida a assinatura em toda requisição.
+- IMPACTO: `users` sempre espelha o Clerk; exclusão com FK (tenant_users etc.)
+  falha com try/catch e fica registrada no log (MVP).
+- STATUS: DECIDIDO e IMPLEMENTADO (aguarda webhook real do dono).
+
 ## D6 — Papel dedicado `app_user` (sem BYPASSRLS) para a aplicação
 - DATA: 2026-08-20
 - MOTIVO: o dono do banco no Neon (`neondb_owner`) tem `BYPASSRLS=true`, que

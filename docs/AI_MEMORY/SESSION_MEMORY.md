@@ -53,3 +53,33 @@ _2026-08-19 — Fase 1: Setup do projeto_
 ## Pendências
 - Reportar fim da Fase 2 ao dono; aguardar confirmação antes da Fase 3 (Clerk).
 - Inspecionar 3 vulnerabilidades high do `npm audit`.
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 3: Clerk integrado
+
+## Feito
+- Instalado `@clerk/nextjs@7.7.9` + `svix`. Chaves do dono preenchidas no `.env`.
+- `lib/clerk.ts` (guarda `clerkEnabled`), `proxy.ts` (Next 16 renomeou middleware
+  → proxy), `ClerkProvider` condicional no layout.
+- Páginas: `/` (landing dinâmica), `/sign-in`, `/sign-up`, `/dashboard`
+  (protegida). Webhook `/api/webhooks/clerk` (upsert de `users` por
+  `authProviderId`, delete tratado com try/catch por FK).
+- Testes: build OK; produção → `/` 200, `/sign-in` 200, `/dashboard` 307→/sign-in.
+
+## Decisões desta sessão
+- Modo "configuração": sem as 2 chaves, o app renderiza instruções em vez de
+  quebrar (permite build/deploy sem segredos). (D7.)
+
+## Descobertas / problemas
+- Next 16: middleware virou `proxy.ts` (funcionalidade igual, novo nome).
+- Clerk v7: `UserButton` NÃO aceita `afterSignOutUrl` (vai no ClerkProvider/env
+  `NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL`).
+- `verifyWebhook` (Svix) exige `NextRequest` (RequestLike), não `Request` cru.
+- `clerkMiddleware()` retorna `NextMiddleware`; tipar variável como tal para
+  evitar o `ReturnType` pegar overload errado.
+
+## Pendências
+- DONO: criar webhook no painel do Clerk (/api/webhooks/clerk, eventos
+  user.*) e colar `CLERK_WEBHOOK_SIGNING_SECRET`; testar primeiro cadastro.
+- Aguardar confirmação para a Fase 4 (tenancy + workspace).
