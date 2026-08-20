@@ -7,7 +7,8 @@ import { clerkEnabled } from "@/lib/clerk";
 import { upsertUserFromClerk } from "@/lib/user-sync";
 import { listUserTenants, withTenant } from "@/core/tenancy/tenancy";
 import SetupRequired from "@/components/SetupRequired";
-import { createWorkspace, selectWorkspace } from "./actions";
+import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
+import { createWorkspace } from "./actions";
 
 function formatPrice(cents: number) {
   if (cents === 0) return "Grátis";
@@ -120,23 +121,13 @@ export default async function DashboardPage() {
         <div className="flex min-w-0 items-center gap-3">
           <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
           {memberships.length > 1 ? (
-            <form action={selectWorkspace}>
-              <select
-                name="tenantId"
-                defaultValue={active.tenantId}
-                onChange={(e) => {
-                  const form = e.currentTarget.form;
-                  if (form && e.target.value) form.requestSubmit();
-                }}
-                className="max-w-[200px] truncate rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm font-semibold text-zinc-900 outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-              >
-                {memberships.map((m) => (
-                  <option key={m.tenantId} value={m.tenantId}>
-                    {m.tenant.name}
-                  </option>
-                ))}
-              </select>
-            </form>
+            <WorkspaceSwitcher
+              memberships={memberships.map((m) => ({
+                tenantId: m.tenantId,
+                tenantName: m.tenant.name,
+              }))}
+              activeTenantId={active.tenantId}
+            />
           ) : (
             <span className="truncate font-semibold text-zinc-900 dark:text-zinc-50">
               {active.tenant.name}
