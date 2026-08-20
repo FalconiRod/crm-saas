@@ -1,10 +1,10 @@
 # CURRENT_STATE
 
 ## Onde estamos
-**Fase 4 — Workspace (tenancy): CONCLUÍDA (aguardando teste do dono).**
-Helper de tenancy, criação de workspace com plano, seletor multi-workspace e
-isolamento verificado por script (`TENANCY_OK`). Próximo: o dono cria o primeiro
-workspace na tela e confirmar para a Fase 5 (Empresas).
+**Fase 4 — Workspace (tenancy): CONCLUÍDA E TESTADA PELO DONO (2026-08-20).**
+O dono criou 2 workspaces ("CRM SAAS", plano Individual, papel OWNER) e o painel
+apareceu. Isolamento verificado por script (`TENANCY_OK`). Próximo: Fase 5
+(Empresas) — aguardando confirmação do dono.
 
 ## O que funciona
 - **Tenancy**: `core/tenancy/tenancy.ts` (withTenantContext/withTenant/
@@ -19,10 +19,11 @@ workspace na tela e confirmar para a Fase 5 (Empresas).
   `prisma migrate status`: up to date.
 
 ## O que falta / atenção
-- DONO: criar o primeiro workspace na tela (http://localhost:3000/dashboard).
+- DONO: confirmar Fase 5 (Empresas) para seguir.
 - Webhook do Clerk ainda opcional (updates/deletes futuros de perfil).
 - Inspecionar 3 vulnerabilidades high do `npm audit`.
-- Fase 5 implementa Empresas (CRUD de crm_companies) usando o tenancy.
+- Duplicar workspaces é permitido (sem validação de nome único) — decisão
+  consciente para o MVP; renomear/excluir workspace ainda não existe.
 
 ## Próximo passo
 Fase 5 — Empresas: CRUD de `crm_companies` (listar/criar/editar/apagar) dentro
