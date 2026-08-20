@@ -1,7 +1,8 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Schema do CRM SaaS multi-tenant (MVP).
+// Regras de segurança:
+//  - Toda tabela "de tenant" tem `tenant_id` e RLS (ver migration add_row_level_security).
+//  - `tenants` (quem paga) NUNCA se mistura com `crm_companies` (empresa-cliente do CRM).
+//  - Colunas em snake_case (padrão do modelo de dados do produto): @map em cada campo.
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +11,194 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ---------------------------------------------------------------
+// Enums (compartilhados com packages/shared via tipos TS)
+// ---------------------------------------------------------------
+
+enum Role {
+  OWNER
+  ADMIN
+  MANAGER
+  USER
+  VIEWER
+}
+
+enum PlanKey {
+  INDIVIDUAL
+  TEAM
+  AGENCY
+}
+
+enum PipelineStage {
+  NOVO
+  CONTATO
+  INTERESSADO
+  PROPOSTA
+  NEGOCIACAO
+  GANHO
+  PERDIDO
+}
+
+// ---------------------------------------------------------------
+// Planos (referência global — SEM tenant_id, SEM RLS)
+// ---------------------------------------------------------------
+
+model Plan {
+  id                      String   @id @default(cuid())
+  key                     PlanKey  @unique
+  name                    String
+  maxUsers                Int? @map("max_users") // null = ilimitado
+  maxCompaniesPerAccount  Int? @map("max_companies_per_account") // null = ilimitado
+  priceCents              Int      @default(0) @map("price_cents")
+  tenants                 Tenant[]
+
+  @@map("plans")
+}
+
+// ---------------------------------------------------------------
+// Tenant: quem ASSINA o SaaS (a "empresa" que paga)
+// ---------------------------------------------------------------
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  planId    String   @map("plan_id")
+  plan      Plan     @relation(fields: [planId], references: [id])
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users     TenantUser[]
+  companies CrmCompany[]
+  contacts  CrmContact[]
+  leads     CrmLead[]
+  events    DomainEvent[]
+
+  @@map("tenants")
+}
+
+// ---------------------------------------------------------------
+// Usuário (identidade GLOBAL, via Clerk na Fase 3) — SEM tenant_id
+// ---------------------------------------------------------------
+
+model User {
+  id             String       @id @default(cuid())
+  name           String
+  email          String       @unique
+  authProviderId String?      @unique @map("auth_provider_id") // id do usuário no Clerk
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  tenantUsers TenantUser[]
+  ownedLeads  CrmLead[]    @relation("LeadOwner")
+  events      DomainEvent[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------
+// Vínculo usuário <-> tenant (N:N) com papel
+// ---------------------------------------------------------------
+
+model TenantUser {
+  tenantId String @map("tenant_id")
+  userId   String @map("user_id")
+  role     Role   @default(USER)
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, userId])
+  @@map("tenant_users")
+}
+
+// ---------------------------------------------------------------
+// CRM COMPANY: empresa-CLIENTE cadastrada PELO tenant no próprio CRM
+// (não confundir com `tenants`)
+// ---------------------------------------------------------------
+
+model CrmCompany {
+  id        String       @id @default(cuid())
+  tenantId  String       @map("tenant_id")
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String?
+  email     String?
+  notes     String?
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  contacts CrmContact[]
+
+  @@index([tenantId])
+  @@map("crm_companies")
+}
+
+// ---------------------------------------------------------------
+// Contato dentro do CRM (opcionalmente vinculado a uma crm_company)
+// ---------------------------------------------------------------
+
+model CrmContact {
+  id           String       @id @default(cuid())
+  tenantId     String       @map("tenant_id")
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  crmCompanyId String?      @map("crm_company_id")
+  crmCompany   CrmCompany?  @relation(fields: [crmCompanyId], references: [id], onDelete: SetNull)
+  name         String
+  phone        String?
+  email        String?
+  tags         String[]     @default([])
+  origin       String?
+  status       String?
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  leads CrmLead[]
+
+  @@index([tenantId])
+  @@map("crm_contacts")
+}
+
+// ---------------------------------------------------------------
+// Lead de vendas do tenant
+// ---------------------------------------------------------------
+
+model CrmLead {
+  id          String        @id @default(cuid())
+  tenantId    String        @map("tenant_id")
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contactId   String        @map("contact_id")
+  contact     CrmContact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  stage       PipelineStage @default(NOVO)
+  value       Decimal?      @db.Decimal(12, 2)
+  origin      String?
+  ownerUserId String?       @map("owner_user_id")
+  ownerUser   User?         @relation("LeadOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  probability Int?          @default(0)
+  notes       String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([stage])
+  @@map("crm_leads")
+}
+
+// ---------------------------------------------------------------
+// Eventos de domínio + auditoria (mesma tabela)
+// ---------------------------------------------------------------
+
+model DomainEvent {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      String
+  payload   Json     @default("{}")
+  isAudit   Boolean  @default(true) @map("is_audit")
+  ip        String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt])
+  @@map("domain_events")
 }

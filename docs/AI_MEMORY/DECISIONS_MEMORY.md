@@ -42,6 +42,21 @@ Formato: DECISÃO / DATA / MOTIVO / CONTEXTO / ALTERNATIVAS / IMPACTO / STATUS
 - MOTIVO: `create-next-app`+npm instalaram Prisma 7.9.1; a v7 mudou o formato:
   gerador `prisma-client` (TS gerado em `app/generated/prisma`, gitignored) e
   `prisma.config.ts` com a URL do datasource (não mais no schema).
-- IMPACTO: imports do client vêm de `@/generated/prisma/client`; `dotenv` é
+- IMPACTO: imports do client vêm de `@/app/generated/prisma/client`; `dotenv` é
   devDependency (usado pelo `prisma.config.ts`).
 - STATUS: CONFIRMADO no validate/generate.
+
+## D6 — Papel dedicado `app_user` (sem BYPASSRLS) para a aplicação
+- DATA: 2026-08-20
+- MOTIVO: o dono do banco no Neon (`neondb_owner`) tem `BYPASSRLS=true`, que
+  **ignora o RLS mesmo com `FORCE ROW LEVEL SECURITY`** — o teste de isolamento
+  vazou dados entre tenants por isso. Criado `app_user` (LOGIN, sem BYPASSRLS)
+  com USAGE no schema + SELECT/INSERT/UPDATE/DELETE em tabelas/sequences +
+  default privileges (tabelas futuras). Migrations continuam com o dono.
+- CONTEXTO: duas URLs — `DATABASE_URL` (dono, migrations, via prisma.config.ts)
+  e `APP_DATABASE_URL` (app_user, runtime, via lib/prisma.ts).
+- ALTERNATIVAS: remover BYPASSRLS do dono (não é possível no Neon); tabelas com
+  triggers/views de segurança (mais complexo); aceitar vazamento (inaceitável).
+- IMPACTO: isolamento multi-tenant garantido de verdade (SMOKE_OK); conexão da
+  app com menor privilégio = mais seguro.
+- STATUS: DECIDIDO e VERIFICADO.

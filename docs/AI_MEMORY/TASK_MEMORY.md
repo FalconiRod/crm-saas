@@ -8,8 +8,13 @@ Formato: ID / OBJETIVO / CONTEXTO / REQUISITOS / ESTADO / PENDÊNCIAS
   backup + repo GitHub privado + push.
 - PENDÊNCIAS: `DATABASE_URL` real (Neon) no `.env` local.
 
-## T2 — Fase 2: Banco de dados — PENDENTE (próxima)
-- Schema Prisma completo: `tenants`, `plans`, `users`, `tenant_users`,
-  `crm_companies`, `crm_contacts`, `crm_leads`, `domain_events`.
-- Primeira migration + políticas RLS nas tabelas com `tenant_id`.
-- REQUISITOS: dono confirmar a Fase 1 e fornecer (ou criar) a URL do Neon.
+## T2 — Fase 2: Banco de dados — CONCLUÍDA (2026-08-20)
+- Schema completo, 3 migrations APLICADAS no Neon; RLS verificado (SMOKE_OK)
+  com papel `app_user` (dono tem BYPASSRLS — descoberta documentada).
+- PENDÊNCIAS: reportar ao dono + aguardar confirmação; inspecionar 3 vulns do
+  npm audit.
+
+## T3 — Fase 3: Autenticação (Clerk) — PENDENTE (próxima)
+- Webhook de sincronização Clerk→`users`, login/register, perfil do usuário.
+- REQUISITOS: dono confirmar a Fase 2 e criar as chaves do Clerk
+  (em https://dashboard.clerk.com) para preencher o `.env`.

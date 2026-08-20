@@ -17,3 +17,12 @@ _Regras descobertas ao longo do projeto. Não repetir erros._
   expor um no lugar do outro.
 - REGRA de segurança: toda query com `tenant_id` passa pelo helper de tenancy + RLS.
   Nunca escrever query Prisma "crua" em rota/componente sem o helper.
+- CONFIRMADO (Fase 2): o papel DONO do Neon tem `BYPASSRLS=true` e **ignora RLS
+  mesmo com `FORCE ROW LEVEL SECURITY`**. A aplicação SEMPRE conecta com o papel
+  `app_user` (`APP_DATABASE_URL`); o dono (`DATABASE_URL`) é só para migrations.
+- CONFIRMADO: `lib/prisma.ts` usa `APP_DATABASE_URL` (fallback `DATABASE_URL`).
+  Nunca usar `DATABASE_URL` (dono) em código de runtime.
+- CONFIRMADO: teste de RLS "fail-closed" só é válido com tenant EXISTENTE — com
+  tenant inexistente o INSERT falha por FK, não por RLS (falso positivo).
+- CONFIRMADO: import do client Prisma gerado é `@/app/generated/prisma/client`
+  (corrigir referência antiga `@/generated/prisma/client`).

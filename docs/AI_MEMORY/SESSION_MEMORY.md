@@ -22,3 +22,34 @@ _2026-08-19 — Fase 1: Setup do projeto_
 ## Pendências
 - DATABASE_URL real (Neon) para a Fase 2.
 - Aguardando confirmação do dono para avançar à Fase 2.
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 2: RLS verificado (SMOKE_OK)
+
+## Feito
+- 3 migrations APLICADAS no Neon (`prisma migrate deploy` OK; status up to date).
+- DESCOBERTA: `neondb_owner` tem `BYPASSRLS=true` → RLS ignorado mesmo com FORCE
+  (era o motivo do vazamento). Criado papel `app_user` sem BYPASSRLS com
+  privilégios mínimos + default privileges; `APP_DATABASE_URL` criada no `.env`.
+- `lib/prisma.ts` passou a usar `APP_DATABASE_URL`; instalados
+  `@prisma/adapter-pg`, `pg`, `@types/pg`, `tsx`.
+- `scripts/verify_db.ts` reescrito → `SMOKE_OK` (planos, create/read, isolamento,
+  fail-closed REAL, cleanup). Scripts de debug removidos. Banco limpo no fim.
+
+## Decisões desta sessão
+- App conecta com papel `app_user`; dono fica só para migrations.
+  (Detalhes em DECISIONS_MEMORY D6.)
+
+## Descobertas / problemas
+- BYPASSRLS do dono ignora RLS mesmo com FORCE (causa do vazamento).
+- Falso positivo em teste RLS: bloqueio por FK vs por RLS — teste só vale com
+  tenant existente.
+- `dotenv` trata linha que começa com `#` como comentário até o fim — `Add-Content`
+  anexou `APP_DATABASE_URL` na mesma linha de um comentário e ela foi ignorada
+  (corrigido colocando em linha própria).
+- esbuild/tsx: top-level await exige ESM (`.mts`) — envolver em `main()` async.
+
+## Pendências
+- Reportar fim da Fase 2 ao dono; aguardar confirmação antes da Fase 3 (Clerk).
+- Inspecionar 3 vulnerabilidades high do `npm audit`.
