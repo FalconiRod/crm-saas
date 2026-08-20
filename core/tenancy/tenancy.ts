@@ -22,11 +22,12 @@ export type TxClient = Prisma.TransactionClient;
 /**
  * Executa `fn` dentro de uma transação com o contexto de sessão definido.
  * - `tenantId`: define `app.tenant_id` (filtra as tabelas de tenant).
- * - `userId`:   define `app.user_id` (permite listar os PRÓPRIOS vínculos —
- *               usado no bootstrap da sessão e no seletor de workspace).
+ * - `userId`:   define `app.user_id` (lista os PRÓPRIOS vínculos — bootstrap).
+ * - `email`:    define `app.user_email` (o convidado lê o próprio convite
+ *               pendente sem ser membro do tenant — Fase 9).
  */
 export async function withTenantContext<T>(
-  opts: { tenantId?: string; userId?: string },
+  opts: { tenantId?: string; userId?: string; email?: string },
   fn: (tx: TxClient) => Promise<T>
 ): Promise<T> {
   return prisma.$transaction(async (tx) => {
@@ -35,6 +36,9 @@ export async function withTenantContext<T>(
     }
     if (opts.userId) {
       await tx.$executeRaw`SELECT set_config('app.user_id', ${opts.userId}, true)`;
+    }
+    if (opts.email) {
+      await tx.$executeRaw`SELECT set_config('app.user_email', ${opts.email}, true)`;
     }
     return fn(tx);
   });

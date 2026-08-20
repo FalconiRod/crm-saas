@@ -1,26 +1,31 @@
 # CURRENT_STATE
 
 ## Onde estamos
-**Fase 8 — Dashboard/Relatórios: IMPLEMENTADA, aguardando teste do dono.**
-Painel com cartões (Empresas/Contatos/Leads/Ganhos/Conversão), funil por estágio
-em barras, leads recentes e filtro de período (7/30/90 dias/tudo). Métricas
-verificadas por script (`DASHBOARD_OK`). Próximo: o dono testar /dashboard e
-confirmar para a Fase 9 (Times/Papéis).
+**Fase 9 — Times/Papéis: IMPLEMENTADA, aguardando teste do dono.**
+Convites por e-mail com aceite automático, papéis (OWNER/ADMIN/MANAGER/USER/
+VIEWER), permissões por papel em todas as actions de CRM e UI condicionada,
+limite de membros do plano. Verificado por script (`TEAM_OK`). Próximo: o dono
+testar /team (criar uma 2ª conta para o aceite) e confirmar para a Fase 10.
 
 ## O que funciona
-- **Dashboard**: métricas reais com escopo RLS do tenant ativo; funil visual;
-  ganhos = soma dos leads GANHO; conversão = GANHO/total; leads recentes;
-  filtro de período via `?p=`.
-- Fases 1–7 seguem funcionando (auth, tenancy, workspaces, empresas, contatos,
-  leads/kanban).
+- **Equipe** (`/team`): lista de membros com papel, convite por e-mail (com
+  papel, nunca OWNER), mudar papel, remover membro, revogar convite, uso do
+  limite do plano (INDIVIDUAL=1, TEAM=10, AGENCY=50).
+- **Aceite automático**: ao logar, quem tem convite pendente (e-mail bate) vira
+  membro com o papel do convite — sem token/e-mail de confirmação.
+- **Permissões** (`core/permissions/access.ts`): VIEWER lê; USER cria/edita/
+  move; MANAGER + exclui; ADMIN/OWNER gerem o time. Actions exigem permissão;
+  UI esconde ações sem permissão.
+- Fases 1–8 seguem funcionando (auth, tenancy, workspaces, empresas, contatos,
+  leads/kanban, dashboard).
 
 ## O que falta / atenção
-- DONO: testar o painel em http://localhost:3000/dashboard e confirmar Fase 9.
+- DONO: testar /team e confirmar Fase 10. Para testar o convite, usar um 2º
+  e-mail/conta.
 - Webhook do Clerk ainda opcional.
 - Inspecionar 3 vulnerabilidades high do `npm audit`.
 - Renomear/excluir workspace ainda não existe (não é bloqueio).
 
 ## Próximo passo
-Fase 9 — Times/Papéis: convidar membros para o workspace com papéis
-(OWNER/ADMIN/MANAGER/USER/VIEWER), respeitando `maxUsers` do plano, com permissões
-por papel (quem pode criar/editar/apagar). **Aguardar confirmação do dono.**
+Fase 10 — Finalização: revisão geral, afinar UX, corrigir pendências, revisão
+de segurança/qualidade e documentação final para deploy.

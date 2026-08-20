@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionWorkspace } from "@/lib/session";
 import { withTenant } from "@/core/tenancy/tenancy";
+import { can } from "@/core/permissions/access";
+import type { Role } from "@shared/index";
 import ContactForm from "./ContactForm";
 import DeleteContactButton from "./DeleteContact";
 
@@ -43,6 +45,10 @@ export default async function ContactsPage({
   ]);
 
   const maxContacts = active.tenant.plan.maxContacts;
+  const role = active.role as Role;
+  const canCreate = can(role, "contact.create");
+  const canUpdate = can(role, "contact.update");
+  const canDelete = can(role, "contact.delete");
 
   return (
     <div className="flex flex-1 flex-col">
@@ -93,36 +99,38 @@ export default async function ContactsPage({
 
           <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
             {/* Cadastro / edição */}
-            <section className="rounded-2xl border border-zinc-200 p-6 lg:col-span-2 dark:border-zinc-800">
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
-                {editing ? "Editar contato" : "Novo contato"}
-              </h3>
-              <p className="mb-4 mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                {editing
-                  ? `Alterando "${editing.name}".`
-                  : "Preencha os dados e clique em cadastrar."}
-              </p>
-              {editing ? (
-                <>
+            {canCreate && (
+              <section className="rounded-2xl border border-zinc-200 p-6 lg:col-span-2 dark:border-zinc-800">
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
+                  {editing ? "Editar contato" : "Novo contato"}
+                </h3>
+                <p className="mb-4 mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  {editing
+                    ? `Alterando "${editing.name}".`
+                    : "Preencha os dados e clique em cadastrar."}
+                </p>
+                {editing && canUpdate ? (
+                  <>
+                    <ContactForm
+                      mode="edit"
+                      contact={editing}
+                      companies={companies.map((c) => ({ id: c.id, name: c.name }))}
+                    />
+                    <Link
+                      href="/contacts"
+                      className="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                    >
+                      Cancelar edição
+                    </Link>
+                  </>
+                ) : (
                   <ContactForm
-                    mode="edit"
-                    contact={editing}
+                    mode="create"
                     companies={companies.map((c) => ({ id: c.id, name: c.name }))}
                   />
-                  <Link
-                    href="/contacts"
-                    className="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                  >
-                    Cancelar edição
-                  </Link>
-                </>
-              ) : (
-                <ContactForm
-                  mode="create"
-                  companies={companies.map((c) => ({ id: c.id, name: c.name }))}
-                />
-              )}
-            </section>
+                )}
+              </section>
+            )}
 
             {/* Lista */}
             <section className="lg:col-span-3">
@@ -169,13 +177,17 @@ export default async function ContactsPage({
                             )}
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
-                            <Link
-                              href={`/contacts?edit=${c.id}${query ? `&q=${encodeURIComponent(query)}` : ""}`}
-                              className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                            >
-                              Editar
-                            </Link>
-                            <DeleteContactButton contactId={c.id} name={c.name} />
+                            {canUpdate && (
+                              <Link
+                                href={`/contacts?edit=${c.id}${query ? `&q=${encodeURIComponent(query)}` : ""}`}
+                                className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                              >
+                                Editar
+                              </Link>
+                            )}
+                            {canDelete && (
+                              <DeleteContactButton contactId={c.id} name={c.name} />
+                            )}
                           </div>
                         </div>
                       </li>

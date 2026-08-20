@@ -52,7 +52,14 @@ Formato: ID / OBJETIVO / CONTEXTO / REQUISITOS / ESTADO / PENDÊNCIAS
 - `verify_dashboard.ts` → DASHBOARD_OK.
 - PENDÊNCIAS: dono testar na tela.
 
-## T9 — Fase 9: Times/Papéis — PENDENTE (próxima)
-- Convidar membros para o workspace com papéis (OWNER/ADMIN/MANAGER/USER/
-  VIEWER); respeitar maxUsers do plano; permissões por papel nas ações de CRM.
-- REQUISITOS: dono confirmar a Fase 8.
+## T9 — Fase 9: Times/Papéis — CONCLUÍDA (2026-08-20)
+- Migration `20260820000700_invitations` (tabela + RLS com app.user_email);
+  `core/permissions/access.ts`; requireWorkspaceAccess(permission);
+  acceptPendingInvitations no bootstrap; team page/actions; permissões nas 10
+  actions de CRM + UI condicionada; `verify_team.ts` → TEAM_OK.
+- PENDÊNCIAS: dono testar na tela (2ª conta para convite).
+
+## T10 — Fase 10: Finalização — PENDENTE (próxima)
+- Revisão geral (UX, segurança, quality), corrigir pendências, documentação
+  final e preparação para deploy.
+- REQUISITOS: dono confirmar a Fase 9.

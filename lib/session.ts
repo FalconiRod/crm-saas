@@ -6,8 +6,11 @@ import {
   listUserTenants,
   requireMembership,
   withTenant,
+  withTenantContext,
   type TxClient,
 } from "@/core/tenancy/tenancy";
+import type { Role } from "@shared/index";
+import { requirePermission, type Permission } from "@/core/permissions/access";
 
 /**
  * Usuário local autenticado (cria/atualiza a linha em `users`).
@@ -28,6 +31,59 @@ export async function getServerUser() {
 }
 
 /**
+ * Aceita convites pendentes do usuário (por e-mail) — rodado no bootstrap.
+ * Se o e-mail tem convite PENDING, vira membro com o papel do convite e o
+ * convite é marcado ACCEPTED.
+ */
+export async function acceptPendingInvitations(user: {
+  id: string;
+  email: string | null;
+}) {
+  if (!user.email) return 0;
+  const email = user.email;
+  const pending = await withTenantContext({ email }, (tx) =>
+    tx.invitation.findMany({
+      where: { email, status: "PENDING" },
+      orderBy: { createdAt: "asc" },
+    })
+  );
+  let accepted = 0;
+  for (const inv of pending) {
+    const done = await withTenantContext(
+      { userId: user.id, tenantId: inv.tenantId, email },
+      async (tx) => {
+        const existing = await tx.tenantUser.findUnique({
+          where: { tenantId_userId: { tenantId: inv.tenantId, userId: user.id } },
+        });
+        if (!existing) {
+          await tx.tenantUser.create({
+            data: { tenantId: inv.tenantId, userId: user.id, role: inv.role },
+          });
+          await tx.domainEvent.create({
+            data: {
+              tenantId: inv.tenantId,
+              userId: user.id,
+              type: "member.joined",
+              payload: { email, role: inv.role },
+            },
+          });
+          return true;
+        }
+        return false;
+      }
+    );
+    await withTenantContext({ userId: user.id, tenantId: inv.tenantId }, (tx) =>
+      tx.invitation.update({
+        where: { id: inv.id },
+        data: { status: "ACCEPTED", acceptedAt: new Date() },
+      })
+    );
+    if (done) accepted += 1;
+  }
+  return accepted;
+}
+
+/**
  * Resolve a sessão + workspace ativo para páginas do CRM.
  * Redireciona para /sign-in se não autenticado. `active` pode ser null quando
  * o usuário ainda não tem nenhum workspace (a página decide o que fazer).
@@ -44,6 +100,7 @@ export async function getSessionWorkspace() {
     username: clerkUser.username,
     email: clerkUser.primaryEmailAddress?.emailAddress,
   });
+  await acceptPendingInvitations(user);
   const memberships = await listUserTenants(user.id);
   const cookieStore = await cookies();
   const cookieTenant = cookieStore.get("active_tenant")?.value;
@@ -54,15 +111,19 @@ export async function getSessionWorkspace() {
 /**
  * Para server actions que operam DENTRO de um workspace: valida a assinatura
  * (membership) do usuário no tenant ativo (cookie `active_tenant`) e devolve
- * o id do usuário local + tenantId.
+ * id do usuário local, tenantId e o PAPEL (para checagem de permissão).
+ * Se `permission` for passada, exige que o papel tenha essa permissão.
  */
-export async function requireWorkspaceAccess(): Promise<{ userId: string; tenantId: string }> {
+export async function requireWorkspaceAccess(
+  permission?: Permission
+): Promise<{ userId: string; tenantId: string; role: Role }> {
   const user = await getServerUser();
   const cookieStore = await cookies();
   const tenantId = cookieStore.get("active_tenant")?.value;
   if (!tenantId) throw new Error("Nenhuma empresa selecionada.");
-  await requireMembership(user.id, tenantId);
-  return { userId: user.id, tenantId };
+  const membership = await requireMembership(user.id, tenantId);
+  if (permission) requirePermission(membership.role, permission);
+  return { userId: user.id, tenantId, role: membership.role };
 }
 
 /** Conveniência: roda uma query de CRM dentro do tenant ativo (com RLS). */

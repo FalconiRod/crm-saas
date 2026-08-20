@@ -1,18 +1,24 @@
-# core/permissions — Papéis e autorização
+# core/permissions — Controle de acesso por papel (Fase 9)
 
-Papéis fixos por tenant (armazenados em `tenant_users.role`):
+## O que faz
+Define quem pode fazer o quê em cada papel do workspace. Autorização é feita
+SEMPRE no servidor, antes de qualquer operação.
 
-| Papel      | O que pode                                    |
-|------------|-----------------------------------------------|
-| OWNER      | Tudo, incluindo gerenciar usuários e plano    |
-| ADMIN      | Tudo operacional, menos excluir o tenant      |
-| MANAGER    | Gerencia equipe e dados do CRM                |
-| USER       | Usa o CRM normalmente                         |
-| VIEWER     | Só visualiza                                  |
+## Papéis
+VIEWER (somente leitura) → USER (criar/editar) → MANAGER (+ excluir) →
+ADMIN (+ gerir o time) → OWNER (tudo, dono único e protegido).
 
-## Regra
+## Como usar
+- `can(role, "company.delete")` → boolean.
+- `requirePermission(role, "member.invite")` → lança 403 se não puder.
+- Na prática, `requireWorkspaceAccess("company.create")` já resolve usuário +
+  tenant + papel e exige a permissão (lib/session.ts).
 
-Autorização (o que um usuário pode fazer) é SEMPRE verificada no servidor. Nunca
-confie em papel/permissão enviado pelo cliente/frontend.
+## Permissões
+`workspace.view`, `company.create/update/delete`, `contact.create/update/delete`,
+`lead.create/update/delete/move`, `member.invite/updateRole/remove`.
 
-**Quando implementar:** Fase 6. Nada de código aqui ainda.
+## Regras
+- OWNER nunca é convidado/removido/rebaixado (INVITABLE_ROLES = sem OWNER).
+- A UI esconde ações sem permissão, mas o bloqueio REAL está no servidor.
+- Matriz explícita por papel (fácil de auditar e ajustar).

@@ -258,3 +258,35 @@ _2026-08-19 — Fase 1: Setup do projeto_
 ## Pendências
 - DONO testar /dashboard e confirmar Fase 9.
 - Aguardar confirmação para a Fase 9 (Times/Papéis).
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 9: Times/Papéis
+
+## Feito
+- Migration `20260820000700_invitations` (tabela + RLS com `app.user_email`).
+- `core/permissions/access.ts` (matriz de papéis + can/requirePermission).
+- `lib/session.ts`: requireWorkspaceAccess(permission?) + acceptPendingInvitations.
+- 10 actions de CRM com permissão; páginas com UI condicionada ao papel.
+- `app/team/` (página + actions + 3 componentes client).
+- `scripts/verify_team.ts` → TEAM_OK.
+
+## Decisões desta sessão
+- Convite SEM token: aceite automático por e-mail no bootstrap da sessão —
+  simples e seguro o bastante para o MVP (o e-mail do Clerk é confiável).
+- Papel OWNER único e protegido (não muda, não remove, não convida).
+- Matriz de permissões explícita por papel (não só hierarquia) para auditoria
+  fácil; permission check centralizado em requireWorkspaceAccess(permission).
+- RLS do convite: leitura por e-mail (`app.user_email`) só para o convidado;
+  criação/edição só dentro do tenant (WITH CHECK).
+
+## Descobertas / problemas
+- app_user ganha privilégios de tabelas novas automaticamente (default
+  privileges do neondb_owner) — verificado via has_table_privilege.
+- Importar lib/session em scripts tsx é arriscado (next/cookies) — teste do
+  aceite foi espelhado no script.
+- Cascade de tenant delete remove os vínculos dos membros (apagar uma vez).
+
+## Pendências
+- DONO testar /team (precisa de 2ª conta para testar convite) e confirmar Fase 10.
+- Aguardar confirmação para a Fase 10 (finalização).

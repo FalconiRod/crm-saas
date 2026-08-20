@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 9: Times/Papéis (convites + permissões)
+- Migration `20260820000700_invitations` aplicada: tabela `invitations` (email,
+  papel, status PENDING/ACCEPTED/REVOKED) com RLS FORCE — o convidado lê o
+  próprio convite pelo e-mail (`app.user_email`), criar/alterar só membros.
+  `app_user` com privilégios via default privileges (verificado).
+- `core/tenancy/tenancy.ts` — contexto de sessão passa a setar `app.user_email`.
+- `core/permissions/access.ts` — matriz `ROLE_PERMISSIONS` (VIEWER→OWNER) e
+  helpers `can`/`requirePermission`; `INVITABLE_ROLES` (sem OWNER).
+- `lib/session.ts` — `requireWorkspaceAccess(permission?)` centraliza a checagem;
+  `acceptPendingInvitations` roda no bootstrap da sessão (aceite automático).
+- `crm/*/actions.ts` — as 10 actions de CRM agora exigem a permissão correta.
+- `app/team/` — página Equipe (membros, convites pendentes, uso do plano),
+  actions `inviteMember`/`changeMemberRole`/`removeMember`/`revokeInvitation`,
+  componentes InviteForm/MemberActions/RevokeInvitation.
+- Páginas de Empresas/Contatos/Leads com UI condicionada ao papel (criar/editar/
+  excluir/mover escondidos conforme permissão).
+- Dashboard: link "Equipe" no cabeçalho.
+- `scripts/verify_team.ts` → **TEAM_OK** (convite, aceite, permissões, papéis,
+  remoção, limite de membros).
+
 ## 2026-08-20 — Fase 8: Dashboard/Relatórios (métricas reais do funil)
 - `app/dashboard/page.tsx` — painel com cartões (Empresas, Contatos, Leads,
   Ganhos, Conversão), funil por estágio em barras (GANHO verde/PERDIDO

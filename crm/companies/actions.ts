@@ -27,7 +27,7 @@ async function getPlanLimit(tenantId: string) {
 
 /** Cria uma empresa-cliente no workspace ativo. */
 export async function createCompany(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess();
+  const { userId, tenantId } = await requireWorkspaceAccess("company.create");
   const { name, cnpj, city, phone, email, notes } = collectFields(formData);
   if (!name) throw new Error("Informe o nome da empresa.");
 
@@ -54,7 +54,7 @@ export async function createCompany(formData: FormData) {
 
 /** Edita uma empresa-cliente do workspace ativo (verifica o vínculo). */
 export async function updateCompany(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess();
+  const { userId, tenantId } = await requireWorkspaceAccess("company.delete");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Empresa inválida.");
   const { name, cnpj, city, phone, email, notes } = collectFields(formData);
@@ -77,7 +77,7 @@ export async function updateCompany(formData: FormData) {
 
 /** Apaga uma empresa-cliente do workspace ativo. */
 export async function deleteCompany(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess();
+  const { userId, tenantId } = await requireWorkspaceAccess("company.update");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Empresa inválida.");
 

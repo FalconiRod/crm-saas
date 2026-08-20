@@ -41,6 +41,12 @@ enum PipelineStage {
   PERDIDO
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
 // ---------------------------------------------------------------
 // Planos (referência global — SEM tenant_id, SEM RLS)
 // ---------------------------------------------------------------
@@ -76,6 +82,7 @@ model Tenant {
   contacts  CrmContact[]
   leads     CrmLead[]
   events    DomainEvent[]
+  invitations Invitation[]
 
   @@map("tenants")
 }
@@ -94,6 +101,7 @@ model User {
   tenantUsers TenantUser[]
   ownedLeads  CrmLead[]    @relation("LeadOwner")
   events      DomainEvent[]
+  invitationsInvited Invitation[] @relation("InvitedBy")
 
   @@map("users")
 }
@@ -111,6 +119,28 @@ model TenantUser {
 
   @@id([tenantId, userId])
   @@map("tenant_users")
+}
+
+// ---------------------------------------------------------------
+// Convite de membro para o workspace (Fase 9 — Times/Papéis)
+// O convidado NÃO é membro ainda: a policy de RLS libera a leitura pelo
+// e-mail (`app.user_email`) para que ele possa aceitar o convite.
+// ---------------------------------------------------------------
+
+model Invitation {
+  id         String           @id @default(cuid())
+  tenantId   String           @map("tenant_id")
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email      String
+  role       Role             @default(VIEWER)
+  invitedBy  String?          @map("invited_by")
+  inviter    User?            @relation("InvitedBy", fields: [invitedBy], references: [id], onDelete: SetNull)
+  status     InvitationStatus @default(PENDING)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  acceptedAt DateTime?        @map("accepted_at")
+
+  @@index([tenantId, email])
+  @@map("invitations")
 }
 
 // ---------------------------------------------------------------

@@ -41,7 +41,7 @@ async function validateContact(tenantId: string, contactId: string) {
 
 /** Cria um lead no workspace ativo (estágio inicial: NOVO). */
 export async function createLead(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess();
+  const { userId, tenantId } = await requireWorkspaceAccess("lead.create");
   const contactId = String(formData.get("contactId") ?? "").trim();
   const stage = String(formData.get("stage") ?? "NOVO") as PipelineStage;
   if (!contactId) throw new Error("Selecione um contato para o lead.");
@@ -83,7 +83,7 @@ export async function createLead(formData: FormData) {
 
 /** Edita um lead do workspace ativo. */
 export async function updateLead(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess();
+  const { userId, tenantId } = await requireWorkspaceAccess("lead.delete");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Lead inválido.");
   const contactId = String(formData.get("contactId") ?? "").trim();
@@ -119,7 +119,7 @@ export async function updateLead(formData: FormData) {
 
 /** Move um lead de estágio no kanban (mantém os demais dados). */
 export async function updateLeadStage(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess();
+  const { userId, tenantId } = await requireWorkspaceAccess("lead.update");
   const id = String(formData.get("id") ?? "").trim();
   const stage = String(formData.get("stage") ?? "") as PipelineStage;
   if (!id) throw new Error("Lead inválido.");
@@ -139,7 +139,7 @@ export async function updateLeadStage(formData: FormData) {
 
 /** Apaga um lead do workspace ativo. */
 export async function deleteLead(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess();
+  const { userId, tenantId } = await requireWorkspaceAccess("lead.move");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Lead inválido.");
 

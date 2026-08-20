@@ -11,9 +11,20 @@ type Props = {
   stage: PipelineStage;
   contactName: string;
   editHref: string;
+  canMove: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
 };
 
-export default function LeadCardControls({ leadId, stage, contactName, editHref }: Props) {
+export default function LeadCardControls({
+  leadId,
+  stage,
+  contactName,
+  editHref,
+  canMove,
+  canEdit,
+  canDelete,
+}: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -49,34 +60,42 @@ export default function LeadCardControls({ leadId, stage, contactName, editHref 
     });
   }
 
+  if (!canMove && !canEdit && !canDelete) return null;
+
   return (
     <div className="mt-3 flex items-center gap-2">
-      <select
-        value={stage}
-        onChange={(e) => move(e.target.value)}
-        disabled={pending}
-        className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-700 outline-none disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-      >
-        {PIPELINE_STAGES.map((s) => (
-          <option key={s} value={s}>
-            {s}
-          </option>
-        ))}
-      </select>
-      <Link
-        href={editHref}
-        className="rounded-lg border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-      >
-        Editar
-      </Link>
-      <button
-        type="button"
-        onClick={remove}
-        disabled={pending}
-        className="rounded-lg border border-red-200 px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
-      >
-        Excluir
-      </button>
+      {canMove && (
+        <select
+          value={stage}
+          onChange={(e) => move(e.target.value)}
+          disabled={pending}
+          className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-700 outline-none disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+        >
+          {PIPELINE_STAGES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+      )}
+      {canEdit && (
+        <Link
+          href={editHref}
+          className="rounded-lg border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        >
+          Editar
+        </Link>
+      )}
+      {canDelete && (
+        <button
+          type="button"
+          onClick={remove}
+          disabled={pending}
+          className="rounded-lg border border-red-200 px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+        >
+          Excluir
+        </button>
+      )}
       {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
     </div>
   );

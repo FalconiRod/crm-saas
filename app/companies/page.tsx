@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionWorkspace } from "@/lib/session";
 import { withTenant } from "@/core/tenancy/tenancy";
+import { can } from "@/core/permissions/access";
+import type { Role } from "@shared/index";
 import CompanyForm from "./CompanyForm";
 import DeleteCompanyButton from "./DeleteCompany";
 
@@ -21,6 +23,10 @@ export default async function CompaniesPage({
   ]);
 
   const maxCompanies = active.tenant.plan.maxCompaniesPerAccount;
+  const role = active.role as Role;
+  const canCreate = can(role, "company.create");
+  const canUpdate = can(role, "company.update");
+  const canDelete = can(role, "company.delete");
   const editing = companies.find((c) => c.id === edit) ?? null;
 
   return (
@@ -58,29 +64,31 @@ export default async function CompaniesPage({
 
           <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
             {/* Cadastro / edição */}
-            <section className="rounded-2xl border border-zinc-200 p-6 lg:col-span-2 dark:border-zinc-800">
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
-                {editing ? "Editar empresa" : "Nova empresa"}
-              </h3>
-              <p className="mb-4 mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                {editing
-                  ? `Alterando "${editing.name}".`
-                  : "Preencha os dados e clique em cadastrar."}
-              </p>
-              {editing ? (
-                <>
-                  <CompanyForm mode="edit" company={editing} />
-                  <Link
-                    href="/companies"
-                    className="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                  >
-                    Cancelar edição
-                  </Link>
-                </>
-              ) : (
-                <CompanyForm mode="create" />
-              )}
-            </section>
+            {canCreate && (
+              <section className="rounded-2xl border border-zinc-200 p-6 lg:col-span-2 dark:border-zinc-800">
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
+                  {editing ? "Editar empresa" : "Nova empresa"}
+                </h3>
+                <p className="mb-4 mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  {editing
+                    ? `Alterando "${editing.name}".`
+                    : "Preencha os dados e clique em cadastrar."}
+                </p>
+                {editing && canUpdate ? (
+                  <>
+                    <CompanyForm mode="edit" company={editing} />
+                    <Link
+                      href="/companies"
+                      className="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                    >
+                      Cancelar edição
+                    </Link>
+                  </>
+                ) : (
+                  <CompanyForm mode="create" />
+                )}
+              </section>
+            )}
 
             {/* Lista */}
             <section className="lg:col-span-3">
@@ -120,13 +128,17 @@ export default async function CompaniesPage({
                             )}
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
-                            <Link
-                              href={`/companies?edit=${c.id}`}
-                              className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                            >
-                              Editar
-                            </Link>
-                            <DeleteCompanyButton companyId={c.id} name={c.name} />
+                            {canUpdate && (
+                              <Link
+                                href={`/companies?edit=${c.id}`}
+                                className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                              >
+                                Editar
+                              </Link>
+                            )}
+                            {canDelete && (
+                              <DeleteCompanyButton companyId={c.id} name={c.name} />
+                            )}
                           </div>
                         </div>
                       </li>

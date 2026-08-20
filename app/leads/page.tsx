@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionWorkspace } from "@/lib/session";
 import { withTenant } from "@/core/tenancy/tenancy";
-import { PIPELINE_STAGES, type PipelineStage } from "@shared/index";
+import { can } from "@/core/permissions/access";
+import { PIPELINE_STAGES, type PipelineStage, type Role } from "@shared/index";
 import LeadForm from "./LeadForm";
 import LeadCardControls from "./LeadCardControls";
 
@@ -42,6 +43,11 @@ export default async function LeadsPage({
   ) as Record<PipelineStage, typeof leads>;
 
   const maxLeads = active.tenant.plan.maxLeads;
+  const role = active.role as Role;
+  const canCreate = can(role, "lead.create");
+  const canUpdate = can(role, "lead.update");
+  const canDelete = can(role, "lead.delete");
+  const canMove = can(role, "lead.move");
   const totalValue = leads
     .filter((l) => l.stage === "GANHO" && l.value)
     .reduce((acc, l) => acc + Number(l.value), 0);
@@ -94,40 +100,42 @@ export default async function LeadsPage({
 
           <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-4">
             {/* Cadastro / edição */}
-            <aside className="lg:col-span-1">
-              <section className="sticky top-6 rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
-                <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
-                  {editing ? "Editar lead" : "Novo lead"}
-                </h3>
-                <p className="mb-4 mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  {editing
-                    ? `Alterando o lead de "${editing.contact.name}".`
-                    : contacts.length === 0
-                      ? "Cadastre um contato antes de criar leads."
-                      : "Preencha e clique em cadastrar."}
-                </p>
-                {editing ? (
-                  <>
+            {canCreate && (
+              <aside className="lg:col-span-1">
+                <section className="sticky top-6 rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+                  <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
+                    {editing ? "Editar lead" : "Novo lead"}
+                  </h3>
+                  <p className="mb-4 mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                    {editing
+                      ? `Alterando o lead de "${editing.contact.name}".`
+                      : contacts.length === 0
+                        ? "Cadastre um contato antes de criar leads."
+                        : "Preencha e clique em cadastrar."}
+                  </p>
+                  {editing && canUpdate ? (
+                    <>
+                      <LeadForm
+                        mode="edit"
+                        lead={toPlain(editing)}
+                        contacts={contacts.map((c) => ({ id: c.id, name: c.name }))}
+                      />
+                      <Link
+                        href="/leads"
+                        className="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                      >
+                        Cancelar edição
+                      </Link>
+                    </>
+                  ) : (
                     <LeadForm
-                      mode="edit"
-                      lead={toPlain(editing)}
+                      mode="create"
                       contacts={contacts.map((c) => ({ id: c.id, name: c.name }))}
                     />
-                    <Link
-                      href="/leads"
-                      className="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                    >
-                      Cancelar edição
-                    </Link>
-                  </>
-                ) : (
-                  <LeadForm
-                    mode="create"
-                    contacts={contacts.map((c) => ({ id: c.id, name: c.name }))}
-                  />
-                )}
-              </section>
-            </aside>
+                  )}
+                </section>
+              </aside>
+            )}
 
             {/* Kanban por estágio */}
             <section className="lg:col-span-3">
@@ -176,6 +184,9 @@ export default async function LeadsPage({
                                 stage={l.stage as PipelineStage}
                                 contactName={l.contact.name}
                                 editHref={`/leads?edit=${l.id}`}
+                                canMove={canMove}
+                                canEdit={canUpdate}
+                                canDelete={canDelete}
                               />
                             </li>
                           );
