@@ -40,7 +40,13 @@ Formato: ID / OBJETIVO / CONTEXTO / REQUISITOS / ESTADO / PENDÊNCIAS
   CONTACTS_OK.
 - PENDÊNCIAS: dono testar na tela.
 
-## T7 — Fase 7: Leads/Pipeline (crm_leads) — PENDENTE (próxima)
-- CRUD de leads (contato obrigatório, estágio do funil, valor, probabilidade);
-  kanban simples por estágio (NOVO→GANHO/PERDIDO); limites por plano.
-- REQUISITOS: dono confirmar a Fase 6.
+## T7 — Fase 7: Leads/Pipeline (crm_leads) — CONCLUÍDA (2026-08-20)
+- Migration `20260820000600_lead_limits` (max_leads); actions create/update/
+  moveStage/delete com contato obrigatório validado, valor/probabilidade, RLS e
+  auditoria; kanban por estágio em `/leads`; `verify_leads.ts` → LEADS_OK.
+- PENDÊNCIAS: dono testar na tela.
+
+## T8 — Fase 8: Dashboard/Relatórios — PENDENTE (próxima)
+- Métricas reais do funil (leads por estágio, ganhos, conversão, contatos/
+  empresas) no painel; filtros simples por período.
+- REQUISITOS: dono confirmar a Fase 7.

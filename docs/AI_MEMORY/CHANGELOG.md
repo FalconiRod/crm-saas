@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 7: Leads/Pipeline (crm_leads + kanban)
+- Migration `20260820000600_lead_limits` aplicada: coluna `max_leads` em
+  `plans` (null = ilimitado por ora).
+- `crm/leads/actions.ts` — `createLead`/`updateLead`/`updateLeadStage`/
+  `deleteLead` com contato obrigatório (validado no mesmo workspace), estágio
+  do funil, valor (parse BR), probabilidade, origem, observações, dono = usuário
+  atual, RLS e auditoria (`lead.created/updated/stage_changed/deleted`).
+- `app/leads/page.tsx` — funil em colunas (kanban) por estágio
+  (NOVO→GANHO/PERDIDO), badge de ganhos (soma dos leads GANHO), formulário de
+  criação/edição. Componentes client: `LeadForm.tsx`,
+  `LeadCardControls.tsx` (mover estágio + editar + excluir).
+- Dashboard: link "Leads" no cabeçalho (nav Empresas | Contatos | Leads).
+- `scripts/verify_leads.ts` → **LEADS_OK** (cria, move estágio, isola contato,
+  ganhos, cleanup).
+
 ## 2026-08-20 — Fase 6: Contatos (CRUD de crm_contacts) + limite de 5 empresas
 - Migration `20260820000500_plan_limits` aplicada: coluna `max_contacts` em
   `plans`; `max_companies_per_account` passa a **5** em INDIVIDUAL e TEAM

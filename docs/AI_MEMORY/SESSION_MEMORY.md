@@ -205,3 +205,33 @@ _2026-08-19 — Fase 1: Setup do projeto_
 ## Pendências
 - DONO testar /contacts e confirmar Fase 7.
 - Aguardar confirmação para a Fase 7 (Leads/Pipeline).
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 7: Leads/Pipeline (kanban)
+
+## Feito
+- Migration `20260820000600_lead_limits` (max_leads).
+- `crm/leads/actions.ts` (create/update/updateLeadStage/delete + contato
+  obrigatório validado + valor BR + probabilidade + RLS + domain_event).
+- `/leads` com kanban por estágio, badge de ganhos, formulário de criação/
+  edição; LeadForm + LeadCardControls (client).
+- Link "Leads" no cabeçalho do dashboard.
+- `scripts/verify_leads.ts` → LEADS_OK.
+
+## Decisões desta sessão
+- Kanban sem drag-and-drop (complexidade): mover estágio via <select> no card
+  (server action `updateLeadStage`). Simples, acessível e suficiente no MVP.
+- Valor do lead aceito em formato BR (1.500,00 / 1500,00) e normalizado na
+  action (parseValue) antes de gravar como Decimal.
+- Dono do lead = usuário que criou (ownerUserId), pronto para time na Fase 9.
+
+## Descobertas / problemas
+- Prisma.Decimal precisa ser convertido para string (toString) antes de passar
+  para componentes client (não serializa).
+- Novo padrão de campo de plano (max_leads) mantém a uniformidade com
+  maxCompaniesPerAccount/maxContacts — fonte da verdade no banco.
+
+## Pendências
+- DONO testar /leads e confirmar Fase 8.
+- Aguardar confirmação para a Fase 8 (Dashboard/Relatórios).
