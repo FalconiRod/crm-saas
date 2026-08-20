@@ -27,11 +27,11 @@ Formato: ID / OBJETIVO / CONTEXTO / REQUISITOS / ESTADO / PENDÊNCIAS
   criação/seleção de workspace; verify_tenancy.ts → TENANCY_OK.
 - PENDÊNCIAS: dono criar o primeiro workspace na tela.
 
-## T5 — Fase 5: Empresas (crm_companies) — CONCLUÍDA (2026-08-20)
+## T5 — Fase 5: Empresas (crm_companies) — CONCLUÍDA E TESTADA (2026-08-20)
 - Migration `20260820000400` (cnpj, city); actions create/update/delete com
   limite de plano + RLS + auditoria; página `/companies` (lista/criar/editar/
-  excluir); `verify_companies.ts` → COMPANIES_OK.
-- PENDÊNCIAS: dono testar na tela.
+  excluir); `verify_companies.ts` → COMPANIES_OK. Dono cadastrou 1 empresa e o
+  limite bloqueou a 2ª.
 
 ## T6 — Fase 6: Contatos (crm_contacts) — PENDENTE (próxima)
 - CRUD de contatos (nome, telefone, e-mail, tags, origem) opcionalmente

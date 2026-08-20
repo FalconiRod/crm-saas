@@ -1,10 +1,10 @@
 # CURRENT_STATE
 
 ## Onde estamos
-**Fase 5 — Empresas (crm_companies): IMPLEMENTADA, aguardando teste do dono.**
-CRUD completo, limite por plano e isolamento verificados por script
-(`COMPANIES_OK`). Próximo: o dono cadastrar/editar/excluir empresas na tela e
-confirmar para a Fase 6 (Contatos).
+**Fase 5 — Empresas (crm_companies): CONCLUÍDA E TESTADA PELO DONO (2026-08-20).**
+Dono cadastrou 1 empresa ("padaria") e o limite bloqueou a 2ª (plano Individual).
+Isolamento verificado (workspace 2 com 0 empresas). Próximo: Fase 6 (Contatos) —
+aguardando confirmação do dono.
 
 ## O que funciona
 - **Empresas**: página `/companies` com lista, cadastro (nome + CNPJ + cidade +
@@ -17,7 +17,7 @@ confirmar para a Fase 6 (Contatos).
 - Fases 1–4 seguem funcionando (auth Clerk, tenancy, workspaces).
 
 ## O que falta / atenção
-- DONO: testar Empresas em http://localhost:3000/companies e confirmar Fase 6.
+- DONO: confirmar Fase 6 (Contatos) para seguir.
 - Webhook do Clerk ainda opcional.
 - Inspecionar 3 vulnerabilidades high do `npm audit`.
 - Renomear/excluir workspace ainda não existe (não é bloqueio).
