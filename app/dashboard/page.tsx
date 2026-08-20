@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { UserButton } from "@clerk/nextjs";
 import { clerkEnabled } from "@/lib/clerk";
+import { upsertUserFromClerk } from "@/lib/user-sync";
 import SetupRequired from "@/components/SetupRequired";
 
 export default async function DashboardPage() {
@@ -11,6 +12,18 @@ export default async function DashboardPage() {
   if (!userId) redirect("/sign-in");
 
   const user = await currentUser();
+
+  // Garante a linha em `users` (idempotente). Necessário para as próximas
+  // fases (workspace/tenancy) mesmo se o webhook ainda não estiver configurado.
+  if (user) {
+    await upsertUserFromClerk({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      email: user.primaryEmailAddress?.emailAddress,
+    });
+  }
 
   return (
     <div className="flex flex-1 flex-col">

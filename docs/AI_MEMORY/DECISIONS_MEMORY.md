@@ -58,6 +58,18 @@ Formato: DECISÃO / DATA / MOTIVO / CONTEXTO / ALTERNATIVAS / IMPACTO / STATUS
 - IMPACTO: fluxo simples para o dono; build CI sem segredos.
 - STATUS: DECIDIDO e TESTADO.
 
+## D9 — Sincronização de `users` resiliente: painel + webhook
+- DATA: 2026-08-20
+- MOTIVO: sem webhook configurado, `users` ficava vazia mesmo com login OK
+  (Clerk guarda o usuário, nosso banco não). O dashboard agora faz
+  `upsertUserFromClerk` (idempotente) a partir da sessão, então o fluxo
+  funciona de imediato; o webhook segue sendo o sync canônico para
+  atualizações/exclusões futuras. Helper único `lib/user-sync.ts` evita
+  duplicação webhook↔painel.
+- CONTEXTO: `auth_provider_id` é a chave única do Clerk em `users`.
+- IMPACTO: Fase 4 (workspace/tenancy) não depende da configuração do webhook.
+- STATUS: DECIDIDO e TESTADO (usuário real gravado).
+
 ## D8 — Webhook Clerk→banco usa `authProviderId` como chave única
 - DATA: 2026-08-20
 - MOTIVO: o `users.id` local é cuid (nosso); o id do Clerk fica em

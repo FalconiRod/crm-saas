@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 3: ajustes pós-teste (catch-all + sync de usuário no painel)
+- Rotas de auth convertidas para catch-all (`/sign-in/[[...rest]]`,
+  `/sign-up/[[...rest]]`) — necessário para o fluxo interno do Clerk (antes o
+  check interno retornava 404 e emitia warning).
+- `lib/user-sync.ts` — helper `upsertUserFromClerk` (idempotente por
+  `authProviderId`), usado pelo webhook E pelo dashboard. O painel agora
+  cria/atualiza o usuário a partir da sessão do Clerk, então o app funciona
+  mesmo SEM webhook configurado (o webhook continua sendo o sync canônico
+  para updates/deletes futuros).
+- Teste real do dono: cadastro + login OK; usuário "Rodrigo Paulo"
+  (rodpaul.rp@gmail.com) gravado em `users`. Build + tsc OK.
+
 ## 2026-08-20 — Fase 3: Autenticação com Clerk integrada
 - Instalados `@clerk/nextjs@7.7.9` e `svix@2.0.0`.
 - `lib/clerk.ts` — guarda `clerkEnabled`: o app funciona (e builda) mesmo sem as

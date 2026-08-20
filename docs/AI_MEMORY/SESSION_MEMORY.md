@@ -83,3 +83,29 @@ _2026-08-19 — Fase 1: Setup do projeto_
 - DONO: criar webhook no painel do Clerk (/api/webhooks/clerk, eventos
   user.*) e colar `CLERK_WEBHOOK_SIGNING_SECRET`; testar primeiro cadastro.
 - Aguardar confirmação para a Fase 4 (tenancy + workspace).
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 3: teste real do dono + ajustes
+
+## Feito
+- Dono cadastrou e logou (rodpaul.rp@gmail.com) — usuário gravado em `users`.
+- Rotas de auth viram catch-all (`/sign-in/[[...rest]]`) — fix do warning do Clerk.
+- `lib/user-sync.ts` (upsertUserFromClerk) usado pelo painel E pelo webhook:
+  painel sincroniza o usuário da sessão (não depende mais do webhook).
+- Build + tsc OK; dev server relançado em localhost:3000 (PID 27080).
+
+## Decisões desta sessão
+- D9: sync resiliente de `users` (painel + webhook, helper único).
+
+## Descobertas / problemas
+- `next build` e `next dev` compartilham `.next`; rodar tsc com dev ativo pode
+  pegar artefatos stale (`validator.ts` referenciando páginas antigas) — reiniciar
+  o dev regenera. Para validar tipos com servidor ativo, rodar build/tsc após
+  parar o dev.
+- Start-Process de servidor de longa duração via shell do opencode: o tool mata
+  o processo no timeout, mas o servidor sobrevive (fica em background).
+
+## Pendências
+- Opcional: configurar webhook real no Clerk (para updates/deletes futuros).
+- Aguardar confirmação para a Fase 4 (tenancy + workspace).

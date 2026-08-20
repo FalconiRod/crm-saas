@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import { prisma } from "@/lib/prisma";
+import { upsertUserFromClerk } from "@/lib/user-sync";
 
 // Webhook do Clerk: mantém a tabela `users` sincronizada com a conta do Clerk.
 // Endpoint: /api/webhooks/clerk (configurar no painel do Clerk, seção Webhooks,
@@ -24,18 +25,12 @@ export async function POST(request: NextRequest) {
     const primary =
       u.email_addresses.find((e) => e.id === u.primary_email_address_id) ??
       u.email_addresses[0];
-    const email = primary?.email_address ?? `clerk_${u.id}@local`;
-    const name =
-      [u.first_name, u.last_name].filter(Boolean).join(" ").trim() ||
-      u.username ||
-      email;
-
-    // upsert: cria no primeiro login e atualiza nas alterações do perfil.
-    // `authProviderId` guarda o id do usuário no Clerk (chave única).
-    await prisma.user.upsert({
-      where: { authProviderId: u.id },
-      create: { authProviderId: u.id, email, name },
-      update: { email, name },
+    await upsertUserFromClerk({
+      id: u.id,
+      firstName: u.first_name,
+      lastName: u.last_name,
+      username: u.username,
+      email: primary?.email_address,
     });
     return new Response("OK", { status: 200 });
   }
