@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRM SaaS Multi-Tenant
 
-## Getting Started
+_[nome provisório a definir]_
 
-First, run the development server:
+CRM completo e vendável como SaaS, que atende três tipos de cliente com o MESMO
+produto (o que muda é o plano, não o código): individual/autônomo, pequena/média
+empresa, e quem administra várias empresas (agência/consultor).
+
+## Stack
+
+- **Next.js 16** (App Router) + React 19 + TypeScript + Tailwind CSS
+- **Prisma 7** + **PostgreSQL** (Neon no desenvolvimento)
+- **Autenticação:** Clerk (a definir na Fase 3)
+- **Hospedagem:** Vercel
+
+## Como rodar
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install          # instala dependências
+cp .env.example .env # cria o .env (preencha a DATABASE_URL do Neon)
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Estrutura
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+/app                  → rotas Next.js (páginas e API routes)
+/core
+  /auth               → integração com o provedor de auth
+  /tenancy            → resolução do tenant atual + helpers de RLS
+  /permissions        → papéis e checagem de acesso
+  /audit              → gravação em domain_events
+/crm
+  /contacts
+  /leads
+  /pipeline
+/prisma               → schema.prisma + migrations
+/packages/shared      → tipos TypeScript compartilhados
+/microapps            → (vazio) módulos plugáveis futuros
+/docs/AI_MEMORY       → memória persistente do projeto
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Segurança (inegociável)
 
-## Learn More
+- Toda tabela de tenant tem `tenant_id`.
+- Toda query passa por filtro de `tenant_id` + Row Level Security no Postgres.
+- Autorização sempre no servidor. Segredos só em variáveis de ambiente.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Mais detalhes em `docs/AI_MEMORY/`.
