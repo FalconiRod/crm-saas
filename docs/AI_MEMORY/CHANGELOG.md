@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 4: Workspace / tenancy implementado
+- Migration `20260820000300_tenancy_session` aplicada no Neon: policies de
+  `tenant_users` e `tenants` passam a aceitar `app.user_id` (bootstrap da
+  sessão — usuário lista os próprios vínculos); `WITH CHECK` mantém
+  `tenant_id = app.tenant_id` (ninguém se auto-adiciona a tenant alheio).
+- `core/tenancy/tenancy.ts` — helpers `withTenantContext`, `withTenant`,
+  `listUserTenants`, `getMembership`, `requireMembership` (transação +
+  `set_config('app.tenant_id'/'app.user_id', $1, true)`).
+- Server actions `app/dashboard/actions.ts` — `createWorkspace` (cria tenant +
+  vínculo OWNER + domain_event `tenant.created` + cookie `active_tenant`) e
+  `selectWorkspace` (valida acesso antes de trocar o cookie).
+- `app/dashboard/page.tsx` — sem workspace: tela de criação (nome + plano);
+  com workspace: cabeçalho com nome/plano/papel + seletor (multi), cards de
+  contadores reais com escopo RLS (empresas/contatos/leads).
+- `scripts/verify_tenancy.ts` → **TENANCY_OK** (cria, lista, isola entre
+  usuários, cleanup).
+
 ## 2026-08-20 — Fase 3: ajustes pós-teste (catch-all + sync de usuário no painel)
 - Rotas de auth convertidas para catch-all (`/sign-in/[[...rest]]`,
   `/sign-up/[[...rest]]`) — necessário para o fluxo interno do Clerk (antes o

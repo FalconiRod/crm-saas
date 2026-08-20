@@ -59,21 +59,27 @@ ip?, createdAt, @@index([tenantId, createdAt])` — RLS FORCE.
 - `PlanKey`: INDIVIDUAL TEAM AGENCY
 - `PipelineStage`: NOVO CONTATO INTERESSADO PROPOSTA NEGOCIACAO GANHO PERDIDO
 
-## RLS (migration `20260820000100_add_row_level_security`)
+## RLS (migrations `20260820000100_add_row_level_security` + `20260820000300_tenancy_session`)
 - Tabelas com RLS FORCE: tenants, tenant_users, crm_companies, crm_contacts,
   crm_leads, domain_events.
-- Policy padrão `tenant_isolation`:
+- Policy `tenant_isolation` (base):
   `USING (tenant_id = nullif(current_setting('app.tenant_id', true), ''))`
   (`tenants` usa `id` no lugar de `tenant_id`).
+- **Bootstrap (migration 20260820000300):** `tenant_users` e `tenants` aceitam
+  também `app.user_id` (id LOCAL de `users`) para o usuário listar os PRÓPRIOS
+  vínculos (workspace switcher). `WITH CHECK` de tenant_users = `tenant_id =
+  app.tenant_id` (ninguém se auto-adiciona a tenant alheio). Dados de CRM
+  seguem 100% fechados por `app.tenant_id`.
 - `FORCE` é essencial para o caso de alguém conectar como dono; mas **dono com
   BYPASSRLS ignora RLS mesmo com FORCE** → a aplicação usa `app_user`.
 - Fail-closed: sem `app.tenant_id` definido → nenhuma linha retorna (testado).
-- A aplicação define `app.tenant_id` dentro de cada transação (helper da Fase 4):
-  `SELECT set_config('app.tenant_id', $1, true)`.
-- VERIFICADO (smoke test `scripts/verify_db.ts`, conectado como `app_user`):
-  create/read dentro do tenant OK; outro tenant vê 0; INSERT sem `app.tenant_id`
-  bloqueado pelo RLS (fail-closed REAL — atenção: teste antigo usava tenant
-  inexistente e o bloqueio era de FK, não RLS).
+- A aplicação define as variáveis dentro de cada transação (helper
+  `core/tenancy/tenancy.ts`): `SELECT set_config('app.tenant_id', $1, true)`
+  e `SELECT set_config('app.user_id', $1, true)`.
+- VERIFICADO (`scripts/verify_db.ts` SMOKE_OK + `scripts/verify_tenancy.ts`
+  TENANCY_OK): create/read dentro do tenant OK; outro tenant vê 0; INSERT sem
+  `app.tenant_id` bloqueado; usuário só vê os próprios vínculos; dono apaga o
+  workspace via cascade.
 
 ## Migrations
 - `20260820000000_init`: tabelas + enums + índices.

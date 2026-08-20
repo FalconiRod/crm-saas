@@ -109,3 +109,34 @@ _2026-08-19 — Fase 1: Setup do projeto_
 ## Pendências
 - Opcional: configurar webhook real no Clerk (para updates/deletes futuros).
 - Aguardar confirmação para a Fase 4 (tenancy + workspace).
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 4: Tenancy + workspace
+
+## Feito
+- Migration `20260820000300_tenancy_session` (app.user_id no RLS de
+  tenant_users/tenants; WITH CHECK fecha auto-add) aplicada no Neon.
+- `core/tenancy/tenancy.ts` com withTenantContext/withTenant/listUserTenants/
+  getMembership/requireMembership.
+- Server actions createWorkspace/selectWorkspace (cookie active_tenant);
+  dashboard com criação/seleção de workspace e contadores RLS.
+- `scripts/verify_tenancy.ts` → TENANCY_OK (cria workspace, isola entre
+  usuários, cleanup).
+
+## Decisões desta sessão
+- Bootstrap da sessão via `app.user_id` (id local em users) nas policies —
+  resolve o problema "como listar meu tenant se o RLS exige saber o tenant".
+- `tenant_id` gerado ANTES da criação (randomUUID) para o WITH CHECK
+  `id = app.tenant_id` permitir o INSERT do tenant.
+- Workspace ativo guardado em cookie httpOnly `active_tenant` (default: 1º).
+
+## Descobertas / problemas
+- `randomUUID` (node:crypto) funciona como id de tenant (coluna é String).
+- `Prisma.TransactionClient` exportado no namespace `Prisma` do client gerado.
+- Nested `$transaction` não é permitido — os loops de limpeza devem criar
+  transações separadas.
+
+## Pendências
+- DONO criar o primeiro workspace na tela.
+- Aguardar confirmação para a Fase 5 (Empresas).

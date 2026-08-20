@@ -58,6 +58,27 @@ Formato: DECISÃO / DATA / MOTIVO / CONTEXTO / ALTERNATIVAS / IMPACTO / STATUS
 - IMPACTO: fluxo simples para o dono; build CI sem segredos.
 - STATUS: DECIDIDO e TESTADO.
 
+## D10 — Bootstrap da sessão via `app.user_id` nas policies de RLS
+- DATA: 2026-08-20
+- MOTIVO: usuário precisa listar os próprios tenants para escolher o workspace,
+  mas o RLS original exigia saber o tenant antes (problema bootstrap). A policy
+  de tenant_users/tenants passou a aceitar "linha do tenant ativo **OU**
+  vínculo do usuário da sessão" (`app.user_id` = id local em `users`). O
+  `WITH CHECK` de tenant_users mantém `tenant_id = app.tenant_id` — ninguém se
+  auto-adiciona a tenant alheio. Dados de CRM continuam 100% por `app.tenant_id`.
+- CONTEXTO: migration `20260820000300_tenancy_session`.
+- IMPACTO: login → listar workspaces → escolher → acessar dados, tudo com RLS.
+- STATUS: DECIDIDO e TESTADO (TENANCY_OK).
+
+## D11 — Workspace ativo em cookie httpOnly `active_tenant`
+- DATA: 2026-08-20
+- MOTIVO: lembrar qual workspace o usuário está usando entre páginas, sem
+  depender de estado global. Default = 1º vínculo. Troca via server action que
+  valida a assinatura (membership) antes de sobrescrever.
+- CONTEXTO: `app/dashboard/actions.ts` (createWorkspace/selectWorkspace).
+- IMPACTO: simplicidade no MVP; migrar para DB/clerk-org se escalar.
+- STATUS: DECIDIDO.
+
 ## D9 — Sincronização de `users` resiliente: painel + webhook
 - DATA: 2026-08-20
 - MOTIVO: sem webhook configurado, `users` ficava vazia mesmo com login OK

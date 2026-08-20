@@ -21,8 +21,13 @@ Formato: ID / OBJETIVO / CONTEXTO / REQUISITOS / ESTADO / PENDÊNCIAS
 - PENDÊNCIAS: dono criar o webhook no Clerk e colar `CLERK_WEBHOOK_SIGNING_SECRET`;
   testar primeiro cadastro (popula `users`).
 
-## T4 — Fase 4: Tenancy + workspace — PENDENTE (próxima)
-- Criar tenant (workspace) para o usuário logado; helper de tenancy
-  (`set_config('app.tenant_id', $1, true)` dentro de transação); tela de
-  configuração do workspace (nome, plano).
-- REQUISITOS: dono confirmar a Fase 3.
+## T4 — Fase 4: Tenancy + workspace — CONCLUÍDA (2026-08-20)
+- Helper `core/tenancy/tenancy.ts`; migration `20260820000300` (app.user_id para
+  bootstrap); server actions createWorkspace/selectWorkspace; dashboard com
+  criação/seleção de workspace; verify_tenancy.ts → TENANCY_OK.
+- PENDÊNCIAS: dono criar o primeiro workspace na tela.
+
+## T5 — Fase 5: Empresas (crm_companies) — PENDENTE (próxima)
+- CRUD de empresas-clientes dentro do workspace usando o tenancy; limite do
+  plano (maxCompaniesPerAccount).
+- REQUISITOS: dono confirmar a Fase 4.

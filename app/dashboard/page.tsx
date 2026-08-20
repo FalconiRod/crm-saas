@@ -1,56 +1,172 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { UserButton } from "@clerk/nextjs";
+import { prisma } from "@/lib/prisma";
 import { clerkEnabled } from "@/lib/clerk";
 import { upsertUserFromClerk } from "@/lib/user-sync";
+import { listUserTenants, withTenant } from "@/core/tenancy/tenancy";
 import SetupRequired from "@/components/SetupRequired";
+import { createWorkspace, selectWorkspace } from "./actions";
+
+function formatPrice(cents: number) {
+  if (cents === 0) return "Grátis";
+  return `R$ ${(cents / 100).toFixed(2).replace(".", ",")}/mês`;
+}
+
+async function getSessionUser() {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+  const clerkUser = await currentUser();
+  if (!clerkUser) redirect("/sign-in");
+  return upsertUserFromClerk({
+    id: clerkUser.id,
+    firstName: clerkUser.firstName,
+    lastName: clerkUser.lastName,
+    username: clerkUser.username,
+    email: clerkUser.primaryEmailAddress?.emailAddress,
+  });
+}
 
 export default async function DashboardPage() {
   if (!clerkEnabled) return <SetupRequired />;
 
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  const user = await getSessionUser();
+  const memberships = await listUserTenants(user.id);
 
-  const user = await currentUser();
+  const cookieStore = await cookies();
+  const cookieTenant = cookieStore.get("active_tenant")?.value;
+  const active = memberships.find((m) => m.tenantId === cookieTenant) ?? memberships[0];
 
-  // Garante a linha em `users` (idempotente). Necessário para as próximas
-  // fases (workspace/tenancy) mesmo se o webhook ainda não estiver configurado.
-  if (user) {
-    await upsertUserFromClerk({
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username,
-      email: user.primaryEmailAddress?.emailAddress,
-    });
+  // ---- Nenhum workspace ainda: tela de criação ----
+  if (!active) {
+    const plans = await prisma.plan.findMany({ orderBy: { priceCents: "asc" } });
+    return (
+      <main className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-10 dark:bg-black">
+        <div className="w-full max-w-md">
+          <h1 className="text-center text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+            Bem-vindo, {user.name.split(" ")[0]} 👋
+          </h1>
+          <p className="mt-2 text-center text-sm text-zinc-500 dark:text-zinc-400">
+            Para começar, crie o seu espaço de trabalho (empresa). Os dados que
+            você cadastrar ficam isolados por empresa.
+          </p>
+          <form
+            action={createWorkspace}
+            className="mt-6 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
+          >
+            <div>
+              <label
+                htmlFor="name"
+                className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                Nome da empresa
+              </label>
+              <input
+                id="name"
+                name="name"
+                required
+                placeholder="Ex.: Minha Consultoria"
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="plan"
+                className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                Plano
+              </label>
+              <select
+                id="plan"
+                name="plan"
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              >
+                {plans.map((p) => (
+                  <option key={p.id} value={p.key}>
+                    {p.name} — {formatPrice(p.priceCents)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit"
+              className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-black dark:hover:bg-zinc-300"
+            >
+              Criar empresa
+            </button>
+          </form>
+        </div>
+      </main>
+    );
   }
+
+  // ---- Tem workspace: dados com escopo RLS do tenant ativo ----
+  const stats = await withTenant(active.tenantId, async (tx) => {
+    const [companies, contacts, leads] = await Promise.all([
+      tx.crmCompany.count(),
+      tx.crmContact.count(),
+      tx.crmLead.count(),
+    ]);
+    return { companies, contacts, leads };
+  });
+
+  const planName = active.tenant.plan.name;
+  const isOwner = active.role === "OWNER";
 
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-        <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-          <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-            CRM SaaS
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
+          {memberships.length > 1 ? (
+            <form action={selectWorkspace}>
+              <select
+                name="tenantId"
+                defaultValue={active.tenantId}
+                onChange={(e) => {
+                  const form = e.currentTarget.form;
+                  if (form && e.target.value) form.requestSubmit();
+                }}
+                className="max-w-[200px] truncate rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm font-semibold text-zinc-900 outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              >
+                {memberships.map((m) => (
+                  <option key={m.tenantId} value={m.tenantId}>
+                    {m.tenant.name}
+                  </option>
+                ))}
+              </select>
+            </form>
+          ) : (
+            <span className="truncate font-semibold text-zinc-900 dark:text-zinc-50">
+              {active.tenant.name}
+            </span>
+          )}
+          <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+            {planName}
           </span>
+          {isOwner && (
+            <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+              Dono
+            </span>
+          )}
         </div>
         <UserButton />
       </header>
 
       <main className="flex-1 px-6 py-10">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-          Olá, {user?.firstName ?? user?.username ?? "usuário"}
+          Painel de {active.tenant.name}
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Sua conta está sincronizada com o Clerk. As funcionalidades do CRM
-          chegam nas próximas fases.
+          Resumo do seu CRM. As próximas fases liberam cada módulo.
         </p>
 
         <div className="mt-8 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
           {[
-            { t: "Empresas", d: "Cadastro de empresas-clientes" },
-            { t: "Contatos", d: "Agenda por empresa" },
-            { t: "Leads", d: "Funil de vendas" },
+            { t: "Empresas", v: stats.companies, d: "Cadastro de empresas-clientes" },
+            { t: "Contatos", v: stats.contacts, d: "Agenda por empresa" },
+            { t: "Leads", v: stats.leads, d: "Funil de vendas" },
           ].map((f) => (
             <div
               key={f.t}
@@ -59,12 +175,12 @@ export default async function DashboardPage() {
               <h2 className="font-medium text-zinc-900 dark:text-zinc-50">
                 {f.t}
               </h2>
+              <p className="mt-1 text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+                {f.v}
+              </p>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                 {f.d}
               </p>
-              <span className="mt-3 inline-block rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                Em breve
-              </span>
             </div>
           ))}
         </div>
