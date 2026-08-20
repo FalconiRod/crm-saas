@@ -290,3 +290,36 @@ _2026-08-19 — Fase 1: Setup do projeto_
 ## Pendências
 - DONO testar /team (precisa de 2ª conta para testar convite) e confirmar Fase 10.
 - Aguardar confirmação para a Fase 10 (finalização).
+
+---
+
+# SESSÃO — 2026-08-20 — Fase 10: Finalização
+
+## Feito
+- Auditoria com agentes (code-reviewer + database-reviewer). Achados principais:
+  permissões trocadas (update/delete) em 3 actions de CRM; fallback para a URL
+  do dono no lib/prisma.ts; RLS de tenants/tenant_users/invitations sem FOR
+  (qualquer membro podia editar/excluir, auto-escalada, tamper de convite);
+  índices ausentes.
+- Correções: permissões alinhadas; fail-fast no prisma; migration
+  `20260820000800_harden_rls_and_indexes` (RLS por comando + índices);
+  aceite de convite sem UPDATE (estado derivado do vínculo); página
+  `/settings` (renomear/excluir, só dono); plano fixo INDIVIDUAL; parseValue
+  robusto; cookie secure.
+- Testes: `verify_hardening.ts` → HARDENING_OK; regressão completa OK;
+  build + lint limpos (limpei erros pré-existentes do lint).
+- `scripts/grant_app_user.sql` + `.env.example` atualizado + README reescrito.
+- `npm audit`: 3 high via `prisma` (toolchain dev) — risco aceito, não runtime.
+
+## Descobertas / decisões
+- D18: RLS por comando (defesa em profundidade); D19: fail-fast; D20: aceite
+  derivado do vínculo; D17: plano sempre do servidor.
+- Prisma client precisa de `prisma generate` após mudanças no schema.
+- Testes de RLS: UPDATE/DELETE bloqueados viram P2025; INSERT bloqueado vira
+  erro de RLS.
+
+## Pendências
+- DONO: revisão final na tela (/settings, Equipe com aceito/pendente) e
+  confirmação da finalização.
+- Melhorias futuras registradas: notificação por e-mail (Resend), billing,
+  nome do produto, deploy.

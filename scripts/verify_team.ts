@@ -3,8 +3,8 @@
 import "dotenv/config";
 import { randomUUID } from "crypto";
 import { prisma } from "../lib/prisma";
-import { listUserTenants, withTenantContext, withTenant } from "../core/tenancy/tenancy";
-import { can, requirePermission, INVITABLE_ROLES } from "../core/permissions/access";
+import { listUserTenants, withTenantContext } from "../core/tenancy/tenancy";
+import { can } from "../core/permissions/access";
 
 const EMAIL_OWNER = "rls_team_owner@example.com";
 const EMAIL_MGR = "rls_team_mgr@example.com";
@@ -12,10 +12,12 @@ const EMAIL_VIEW = "rls_team_view@example.com";
 const EMAIL_OUTSIDER = "rls_team_out@example.com";
 
 // Espelha a lógica de lib/session.acceptPendingInvitations (sem next/cookies).
+// O convite NÃO é marcado ACCEPTED: "Aceito" é derivado do vínculo criado.
 async function acceptInvitations(user: { id: string; email: string | null }) {
   if (!user.email) return 0;
-  const pending = await withTenantContext({ email: user.email }, (tx) =>
-    tx.invitation.findMany({ where: { email: user.email, status: "PENDING" } })
+  const email = user.email;
+  const pending = await withTenantContext({ email }, (tx) =>
+    tx.invitation.findMany({ where: { email, status: "PENDING" } })
   );
   for (const inv of pending) {
     await withTenantContext({ userId: user.id, tenantId: inv.tenantId, email: user.email }, async (tx) => {
@@ -26,9 +28,6 @@ async function acceptInvitations(user: { id: string; email: string | null }) {
         await tx.tenantUser.create({ data: { tenantId: inv.tenantId, userId: user.id, role: inv.role } });
       }
     });
-    await withTenantContext({ userId: user.id, tenantId: inv.tenantId }, (tx) =>
-      tx.invitation.update({ where: { id: inv.id }, data: { status: "ACCEPTED", acceptedAt: new Date() } })
-    );
   }
 }
 
@@ -81,7 +80,12 @@ async function main() {
   const viewMs = await listUserTenants(view.id);
   if (mgrMs.length !== 1 || mgrMs[0].role !== "MANAGER") throw new Error("mgr não virou MANAGER");
   if (viewMs.length !== 1 || viewMs[0].role !== "VIEWER") throw new Error("view não virou VIEWER");
-  console.log("OK: aceite automático (MANAGER e VIEWER)");
+  // O convite continua PENDING (o "aceito" é derivado do vínculo).
+  const stillPending = await withTenantContext({ userId: owner.id, tenantId }, (tx) =>
+    tx.invitation.count({ where: { tenantId, status: "PENDING" } })
+  );
+  if (stillPending !== 2) throw new Error("convites deveriam continuar PENDING após o aceite");
+  console.log("OK: aceite automático (MANAGER e VIEWER, convite segue PENDING)");
 
   // Permissões: MANAGER cria empresa e lead; VIEWER não.
   if (!can("MANAGER", "company.create")) throw new Error("MANAGER deveria criar empresa");

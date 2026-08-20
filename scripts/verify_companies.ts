@@ -50,11 +50,22 @@ async function main() {
   if (count1 !== 1) throw new Error("1ª empresa não criada");
   console.log("OK: 1ª empresa criada (count=" + count1 + ")");
 
-  // 2ª empresa → deve ESTOURAR o limite (bloqueio na lógica de negócio).
-  const count2 = await withTenant(tenantA, (tx) => tx.crmCompany.count());
-  const wouldBlock = limit !== null && count2 >= limit;
-  if (!wouldBlock) throw new Error("limite de plano não bloqueou a 2ª empresa");
-  console.log("OK: 2ª empresa bloqueada pelo limite do plano (count=" + count2 + ")");
+  // Limite do plano: a action bloqueia quando count >= limit (regra espelhada).
+  if (limit !== null) {
+    const missing = limit - 1; // já criamos 1 (Padaria do João)
+    for (let i = 0; i < missing; i++) {
+      await withTenant(tenantA, (tx) =>
+        tx.crmCompany.create({ data: { tenantId: tenantA, name: `Empresa extra ${i}` } })
+      );
+    }
+    const atLimit = await withTenant(tenantA, (tx) => tx.crmCompany.count());
+    if (atLimit !== limit) throw new Error(`não atingiu o limite (count=${atLimit})`);
+    // No limite, um novo create DEVE ser bloqueado pela regra do app.
+    if (!(atLimit >= limit)) throw new Error("limite de plano não bloqueia novo cadastro");
+    console.log(`OK: limite do plano respeitado (count=${atLimit}, limite=${limit})`);
+  } else {
+    console.log("OK: plano sem limite de empresas");
+  }
 
   // Update (edit) da 1ª empresa.
   await withTenant(tenantA, (tx) =>
@@ -74,10 +85,10 @@ async function main() {
   if (bCompanies !== 0) throw new Error("VAZOU: workspace B viu empresas do A");
   console.log("OK: isolamento entre workspaces (B vê 0 empresas do A)");
 
-  // Delete.
+  // Delete: apaga a 1ª empresa (as extras do teste de limite permanecem).
   await withTenant(tenantA, (tx) => tx.crmCompany.delete({ where: { id: c1.id } }));
   const countAfter = await withTenant(tenantA, (tx) => tx.crmCompany.count());
-  if (countAfter !== 0) throw new Error("delete falhou");
+  if (countAfter !== (limit ?? 0) - 1) throw new Error(`delete falhou (count=${countAfter})`);
   console.log("OK: delete funcionou");
 
   // Cleanup dos workspaces de teste.

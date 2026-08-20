@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
 import { requireWorkspaceAccess, withActiveTenant } from "@/lib/session";
 
 // Campos opcionais comuns entre criar/editar.
@@ -54,7 +53,7 @@ export async function createCompany(formData: FormData) {
 
 /** Edita uma empresa-cliente do workspace ativo (verifica o vínculo). */
 export async function updateCompany(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess("company.delete");
+  const { userId, tenantId } = await requireWorkspaceAccess("company.update");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Empresa inválida.");
   const { name, cnpj, city, phone, email, notes } = collectFields(formData);
@@ -77,7 +76,7 @@ export async function updateCompany(formData: FormData) {
 
 /** Apaga uma empresa-cliente do workspace ativo. */
 export async function deleteCompany(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess("company.update");
+  const { userId, tenantId } = await requireWorkspaceAccess("company.delete");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Empresa inválida.");
 

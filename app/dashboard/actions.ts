@@ -6,7 +6,6 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getServerUser } from "@/lib/session";
 import { withTenantContext } from "@/core/tenancy/tenancy";
-import type { PlanKey } from "@shared/index";
 
 const ACTIVE_TENANT_COOKIE = "active_tenant";
 
@@ -15,6 +14,7 @@ function setActiveTenantCookie(tenantId: string) {
     cookieStore.set(ACTIVE_TENANT_COOKIE, tenantId, {
       httpOnly: true,
       sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 365, // 1 ano
     })
@@ -25,11 +25,14 @@ function setActiveTenantCookie(tenantId: string) {
 export async function createWorkspace(formData: FormData) {
   const user = await getServerUser();
   const name = String(formData.get("name") ?? "").trim();
-  const planKey = String(formData.get("plan") ?? "INDIVIDUAL") as PlanKey;
   if (!name) throw new Error("Informe o nome da empresa.");
 
-  const plan = await prisma.plan.findUnique({ where: { key: planKey } });
-  if (!plan) throw new Error("Plano inválido.");
+  // O plano vem SEMPRE do servidor (INDIVIDUAL até existir pagamento).
+  // Nunca confiar em plano vindo do cliente: cada plano define limites
+  // (membros/empresas/contatos/leads), então aceitar um plano arbitrário
+  // seria um "free upgrade".
+  const plan = await prisma.plan.findUnique({ where: { key: "INDIVIDUAL" } });
+  if (!plan) throw new Error("Plano não encontrado.");
 
   // O id é gerado ANTES para podermos definir app.tenant_id = id e a policy do
   // `tenants` (WITH CHECK: id = app.tenant_id) permitir a criação.
@@ -44,7 +47,7 @@ export async function createWorkspace(formData: FormData) {
         tenantId,
         userId: user.id,
         type: "tenant.created",
-        payload: { name, planKey },
+        payload: { name, planKey: "INDIVIDUAL" },
       },
     });
   });

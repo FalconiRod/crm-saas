@@ -32,8 +32,12 @@ export async function getServerUser() {
 
 /**
  * Aceita convites pendentes do usuário (por e-mail) — rodado no bootstrap.
- * Se o e-mail tem convite PENDING, vira membro com o papel do convite e o
- * convite é marcado ACCEPTED.
+ * Se o e-mail tem convite PENDING, vira membro com o papel do convite.
+ *
+ * O convite NÃO é marcado ACCEPTED aqui de propósito: o convidado não tem
+ * permissão de escrita em `invitations` (RLS), então quem define o estado é o
+ * próprio sistema — um convite vira "Aceito" quando o membro existe (a página
+ * de Equipe deriva isso do vínculo).
  */
 export async function acceptPendingInvitations(user: {
   id: string;
@@ -47,7 +51,7 @@ export async function acceptPendingInvitations(user: {
       orderBy: { createdAt: "asc" },
     })
   );
-  let accepted = 0;
+  let joined = 0;
   for (const inv of pending) {
     const done = await withTenantContext(
       { userId: user.id, tenantId: inv.tenantId, email },
@@ -55,32 +59,24 @@ export async function acceptPendingInvitations(user: {
         const existing = await tx.tenantUser.findUnique({
           where: { tenantId_userId: { tenantId: inv.tenantId, userId: user.id } },
         });
-        if (!existing) {
-          await tx.tenantUser.create({
-            data: { tenantId: inv.tenantId, userId: user.id, role: inv.role },
-          });
-          await tx.domainEvent.create({
-            data: {
-              tenantId: inv.tenantId,
-              userId: user.id,
-              type: "member.joined",
-              payload: { email, role: inv.role },
-            },
-          });
-          return true;
-        }
-        return false;
+        if (existing) return false;
+        await tx.tenantUser.create({
+          data: { tenantId: inv.tenantId, userId: user.id, role: inv.role },
+        });
+        await tx.domainEvent.create({
+          data: {
+            tenantId: inv.tenantId,
+            userId: user.id,
+            type: "member.joined",
+            payload: { email, role: inv.role },
+          },
+        });
+        return true;
       }
     );
-    await withTenantContext({ userId: user.id, tenantId: inv.tenantId }, (tx) =>
-      tx.invitation.update({
-        where: { id: inv.id },
-        data: { status: "ACCEPTED", acceptedAt: new Date() },
-      })
-    );
-    if (done) accepted += 1;
+    if (done) joined += 1;
   }
-  return accepted;
+  return joined;
 }
 
 /**

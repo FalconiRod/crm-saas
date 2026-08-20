@@ -145,3 +145,57 @@ Formato: DECISÃO / DATA / MOTIVO / CONTEXTO / ALTERNATIVAS / IMPACTO / STATUS
 - IMPACTO: isolamento multi-tenant garantido de verdade (SMOKE_OK); conexão da
   app com menor privilégio = mais seguro.
 - STATUS: DECIDIDO e VERIFICADO.
+
+## D15 — Convites por e-mail com aceite automático (sem token/e-mail enviado)
+- DATA: 2026-08-20
+- MOTIVO: MVP sem provedor de e-mail (Resend etc.). O convidado lê o convite
+  pelo e-mail do Clerk (`app.user_email`) e, ao logar, o bootstrap
+  (`acceptPendingInvitations`) cria o vínculo com o papel do convite.
+- ALTERNATIVAS: enviar e-mail real (Resend) — registrado como melhoria futura.
+- IMPACTO: convite é "silencioso" até a pessoa logar; dono aceitou.
+- STATUS: DECIDIDO e TESTADO (TEAM_OK).
+
+## D16 — Matriz de permissões explícita por papel (core/permissions/access.ts)
+- DATA: 2026-08-20
+- MOTIVO: auditar "quem pode o quê" por papel de forma direta; checagem
+  centralizada em `requireWorkspaceAccess(permission)` no servidor + UI
+  condicionada ao papel. Papel OWNER único e protegido (não muda/remove).
+- IMPACTO: qualquer nova action declara a permissão que exige; fica impossível
+  esquecer a checagem por padrão.
+- STATUS: DECIDIDO e TESTADO.
+
+## D17 — Workspace novo sempre no plano INDIVIDUAL (até existir pagamento)
+- DATA: 2026-08-20
+- MOTIVO: o seletor de plano no createWorkspace confiava no cliente — qualquer
+  um poderia pedir AGENCY e ganhar limites maiores de graça. Sem billing, o
+  plano vem SEMPRE do servidor (INDIVIDUAL).
+- ALTERNATIVAS: aceitar plano do cliente (falha de "entitlement"); billing real.
+- IMPACTO: criação de workspace sem escolha de plano (UI simplificada).
+- STATUS: DECIDIDO.
+
+## D18 — RLS por comando nas tabelas de segurança (Fase 10)
+- DATA: 2026-08-20
+- MOTIVO: as policies originais (sem FOR) deixavam QUALQUER membro atualizar/
+  excluir o tenant, se auto-promover a OWNER e o convidado alterar o próprio
+  convite. Passamos a policies separadas por comando: SELECT p/ membros,
+  INSERT p/ o próprio usuário com papel vindo de convite, UPDATE/DELETE p/
+  OWNER/ADMIN. O aceite passou a NÃO marcar ACCEPTED (estado derivado do
+  vínculo) para o convidado não precisar de escrita em invitations.
+- CONTEXTO: migration `20260820000800_harden_rls_and_indexes`.
+- IMPACTO: defesa em profundidade real; testes HARDENING_OK.
+- STATUS: DECIDIDO e TESTADO.
+
+## D19 — Falha rápida sem APP_DATABASE_URL (nunca usar a URL do dono em runtime)
+- DATA: 2026-08-20
+- MOTIVO: `lib/prisma.ts` tinha fallback para `DATABASE_URL` (dono, BYPASSRLS) —
+  se faltasse a variável, o isolamento sumiria em silêncio. Agora o boot quebra
+  com mensagem clara.
+- STATUS: DECIDIDO.
+
+## D20 — Aceite de convite não é atômico em dois passos: derivado do vínculo
+- DATA: 2026-08-20
+- MOTIVO: o fluxo antigo criava o vínculo e DEPOIS marcava o convite ACCEPTED em
+  transações separadas (janela de inconsistência + exigia escrita do convidado
+  em invitations, o que abria tamper). Agora: cria o vínculo (1 transação) e o
+  status "Aceito" é derivado da existência do membro na página de Equipe.
+- STATUS: DECIDIDO e TESTADO.

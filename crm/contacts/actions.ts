@@ -72,7 +72,7 @@ export async function createContact(formData: FormData) {
 
 /** Edita um contato do workspace ativo. */
 export async function updateContact(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess("contact.delete");
+  const { userId, tenantId } = await requireWorkspaceAccess("contact.update");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Contato inválido.");
   const { name, crmCompanyId, phone, email, tags, origin } = collectFields(formData);
@@ -97,7 +97,7 @@ export async function updateContact(formData: FormData) {
 
 /** Apaga um contato do workspace ativo. */
 export async function deleteContact(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess("contact.update");
+  const { userId, tenantId } = await requireWorkspaceAccess("contact.delete");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Contato inválido.");
 

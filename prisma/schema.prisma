@@ -118,6 +118,7 @@ model TenantUser {
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([tenantId, userId])
+  @@index([userId])
   @@map("tenant_users")
 }
 
@@ -140,6 +141,7 @@ model Invitation {
   acceptedAt DateTime?        @map("accepted_at")
 
   @@index([tenantId, email])
+  @@index([email, status])
   @@map("invitations")
 }
 
@@ -189,6 +191,7 @@ model CrmContact {
   leads CrmLead[]
 
   @@index([tenantId])
+  @@index([tenantId, crmCompanyId])
   @@map("crm_contacts")
 }
 
@@ -213,7 +216,9 @@ model CrmLead {
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
   @@index([tenantId])
-  @@index([stage])
+  @@index([tenantId, stage])
+  @@index([tenantId, contactId])
+  @@index([tenantId, ownerUserId])
   @@map("crm_leads")
 }
 

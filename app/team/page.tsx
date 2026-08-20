@@ -25,9 +25,22 @@ export default async function TeamPage() {
       tx.tenantUser.findMany({ include: { user: true }, orderBy: { role: "asc" } })
     ),
     withTenant(active.tenantId, (tx) =>
-      tx.invitation.findMany({ where: { status: "PENDING" }, orderBy: { createdAt: "desc" } })
+      tx.invitation.findMany({
+        where: { status: { in: ["PENDING", "ACCEPTED"] } },
+        orderBy: { createdAt: "desc" },
+      })
     ),
   ]);
+
+  // "Aceito" é derivado: um convite está aceito quando o e-mail já virou membro
+  // (o aceite automático não marca o convite — ver lib/session.ts).
+  const memberEmails = new Set(members.map((m) => m.user.email));
+  const openInvites = invitations.filter(
+    (i) => i.status === "PENDING" && !memberEmails.has(i.email)
+  );
+  const acceptedInvites = invitations.filter(
+    (i) => i.status === "ACCEPTED" || memberEmails.has(i.email)
+  );
 
   const maxUsers = active.tenant.plan.maxUsers;
   const role = active.role as Role;
@@ -72,7 +85,7 @@ export default async function TeamPage() {
                 A pessoa entra com a conta dela (e-mail/Clerk) e o convite é aceito automaticamente.
               </p>
               <InviteForm
-                maxReached={maxUsers !== null && members.length + invitations.length >= maxUsers}
+                maxReached={maxUsers !== null && members.length + openInvites.length >= maxUsers}
               />
             </section>
           )}
@@ -123,12 +136,12 @@ export default async function TeamPage() {
             })}
           </section>
 
-          {invitations.length > 0 && canInvite && (
+          {openInvites.length > 0 && canInvite && (
             <section className="mt-8 space-y-3">
               <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
-                Convites pendentes ({invitations.length})
+                Convites pendentes ({openInvites.length})
               </h3>
-              {invitations.map((inv) => (
+              {openInvites.map((inv) => (
                 <div
                   key={inv.id}
                   className="rounded-2xl border border-dashed border-zinc-300 p-5 dark:border-zinc-700"
@@ -141,6 +154,32 @@ export default async function TeamPage() {
                       </p>
                     </div>
                     <RevokeInvitation invitationId={inv.id} email={inv.email} />
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {acceptedInvites.length > 0 && canInvite && (
+            <section className="mt-8 space-y-3">
+              <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                Convites aceitos ({acceptedInvites.length})
+              </h3>
+              {acceptedInvites.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-50">{inv.email}</p>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        Papel: {ROLE_LABEL[inv.role as Role]}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                      Aceito
+                    </span>
                   </div>
                 </div>
               ))}

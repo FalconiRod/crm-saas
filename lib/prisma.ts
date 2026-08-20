@@ -16,14 +16,22 @@ import { PrismaPg } from "@prisma/adapter-pg";
 // dentro de cada transação (helper de tenancy, Fase 4).
 // A `DATABASE_URL` (dona) é usada só pelas migrations (prisma.config.ts).
 
+// FALHA RÁPIDA: se faltar APP_DATABASE_URL, NUNCA cai para a URL do dono.
+// O dono tem BYPASSRLS no Neon — se a app conectasse como dono, o isolamento
+// entre tenants sumiria silenciosamente. Sem a variável, quebre no boot.
+const runtimeUrl = process.env.APP_DATABASE_URL;
+if (!runtimeUrl) {
+  throw new Error(
+    "APP_DATABASE_URL ausente. Configure a variável com a connection string do papel app_user (NUNCA a do dono)."
+  );
+}
+
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma: PrismaClient =
   globalForPrisma.prisma ??
   new PrismaClient({
-    adapter: new PrismaPg({
-      connectionString: process.env.APP_DATABASE_URL ?? process.env.DATABASE_URL,
-    }),
+    adapter: new PrismaPg({ connectionString: runtimeUrl }),
   });
 
 if (process.env.NODE_ENV !== "production") {

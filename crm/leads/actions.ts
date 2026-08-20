@@ -4,12 +4,22 @@ import { revalidatePath } from "next/cache";
 import { requireWorkspaceAccess, withActiveTenant } from "@/lib/session";
 import { PIPELINE_STAGES, type PipelineStage } from "@shared/index";
 
-/** Converte "1234,56" ou "1234.56" em número seguro. */
+/** Converte "1234,56", "1.234,56" ou "1234.56" em número seguro. */
 function parseValue(input: string): string | null {
-  const cleaned = input.trim().replace(/\./g, "").replace(",", ".");
-  if (!cleaned) return null;
+  const raw = input.trim();
+  if (!raw) return null;
+  let cleaned = raw;
+  // pt-BR: "1.500,50" = milhar com ponto + decimal com vírgula.
+  if (cleaned.includes(",") && cleaned.includes(".")) {
+    cleaned = cleaned.replace(/\./g, "").replace(",", ".");
+  } else if (cleaned.includes(",")) {
+    cleaned = cleaned.replace(",", ".");
+  }
+  cleaned = cleaned.replace(/\s/g, "");
   const n = Number(cleaned);
-  if (!Number.isFinite(n) || n < 0) throw new Error("Valor inválido. Use números, ex.: 1500,00");
+  if (!Number.isFinite(n) || n < 0)
+    throw new Error("Valor inválido. Use números, ex.: 1500,00");
+  if (n > 9999999999.99) throw new Error("Valor muito alto (máx. R$ 9.999.999.999,99).");
   return n.toFixed(2);
 }
 
@@ -83,7 +93,7 @@ export async function createLead(formData: FormData) {
 
 /** Edita um lead do workspace ativo. */
 export async function updateLead(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess("lead.delete");
+  const { userId, tenantId } = await requireWorkspaceAccess("lead.update");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Lead inválido.");
   const contactId = String(formData.get("contactId") ?? "").trim();
@@ -119,7 +129,7 @@ export async function updateLead(formData: FormData) {
 
 /** Move um lead de estágio no kanban (mantém os demais dados). */
 export async function updateLeadStage(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess("lead.update");
+  const { userId, tenantId } = await requireWorkspaceAccess("lead.move");
   const id = String(formData.get("id") ?? "").trim();
   const stage = String(formData.get("stage") ?? "") as PipelineStage;
   if (!id) throw new Error("Lead inválido.");
@@ -139,7 +149,7 @@ export async function updateLeadStage(formData: FormData) {
 
 /** Apaga um lead do workspace ativo. */
 export async function deleteLead(formData: FormData) {
-  const { userId, tenantId } = await requireWorkspaceAccess("lead.move");
+  const { userId, tenantId } = await requireWorkspaceAccess("lead.delete");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Lead inválido.");
 

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { clerkEnabled } from "@/lib/clerk";
 
 // Tela mostrada enquanto as chaves do Clerk não forem configuradas no .env.
 // (Fase 3 — Autenticação). Não usa ClerkProvider nem auth().

@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-08-20 — Fase 10: Finalização (auditoria, hardening e documentação)
+- **Auditoria** (code-reviewer + database-reviewer): permissões trocadas nas
+  actions de CRM corrigidas (update/delete/move); fallback da URL do dono
+  removido (`lib/prisma.ts` agora falha rápido sem `APP_DATABASE_URL`).
+- **Migration `20260820000800_harden_rls_and_indexes`**: policies de RLS de
+  tenants/tenant_users/invitations por comando (UPDATE/DELETE só OWNER/ADMIN;
+  INSERT de vínculo = próprio usuário + papel do convite; convidado não altera
+  convite) + índices que faltavam.
+- **Aceite de convite**: não marca mais ACCEPTED (estado derivado do vínculo);
+  página de Equipe mostra "Aceito" quando o e-mail virou membro.
+- **Configurações** (`/settings`): renomear e excluir workspace (só OWNER).
+- **Plano**: workspace novo sempre INDIVIDUAL (servidor decide; sem seletor).
+- **parseValue** de leads: suporta `1.500,50`/`1500,00`/`1500.00` e limita o
+  valor máximo; cookie `active_tenant` com `secure` em produção.
+- **Testes**: `scripts/verify_hardening.ts` (HARDENING_OK) + regressão completa
+  (TEAM/TENANCY/COMPANIES/CONTACTS/LEADS/DASHBOARD_OK) + build + lint limpos.
+- **Reprodutibilidade**: `scripts/grant_app_user.sql` (idempotente) + README
+  completo. `npm audit`: 3 high no toolchain do Prisma (risco aceito).
+
 ## 2026-08-20 — Fase 9: Times/Papéis (convites + permissões)
 - Migration `20260820000700_invitations` aplicada: tabela `invitations` (email,
   papel, status PENDING/ACCEPTED/REVOKED) com RLS FORCE — o convidado lê o

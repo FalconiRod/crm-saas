@@ -10,7 +10,7 @@ const TENANT_SMOKE = "tenant_smoke_test";
 async function withTenant<T>(tenantId: string, fn: (tx: typeof prisma) => Promise<T>): Promise<T> {
   return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
-    return fn(tx as any);
+    return fn(tx as unknown as typeof prisma);
   });
 }
 

@@ -59,7 +59,11 @@ Formato: ID / OBJETIVO / CONTEXTO / REQUISITOS / ESTADO / PENDÊNCIAS
   actions de CRM + UI condicionada; `verify_team.ts` → TEAM_OK.
 - PENDÊNCIAS: dono testar na tela (2ª conta para convite).
 
-## T10 — Fase 10: Finalização — PENDENTE (próxima)
-- Revisão geral (UX, segurança, quality), corrigir pendências, documentação
-  final e preparação para deploy.
-- REQUISITOS: dono confirmar a Fase 9.
+## T10 — Fase 10: Finalização — CONCLUÍDA (2026-08-20)
+- Auditoria (code + DB review), correção das permissões de CRM, hardening de
+  RLS por comando (migration 008), fail-fast do Prisma, /settings
+  (renomear/excluir workspace), plano sempre INDIVIDUAL, aceite derivado do
+  vínculo, verify_hardening.ts, build+lint limpos, README + grant_app_user.sql,
+  memória atualizada.
+- PENDÊNCIAS: dono fazer revisão final na tela e confirmar; decidir nome,
+  billing, deploy e melhorias (e-mail de convite via Resend etc.).
